@@ -1,0 +1,19 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "stackportfolio",
+  "description": "Stackportfolio plugins and MCP server integrations for Claude Code",
+  "owner": {
+    "name": "Stackportfolio",
+    "url": "https://stackportfol.io"
+  },
+  "plugins": [
+    {
+      "name": "stackportfolio",
+      "source": "./plugins/stackportfolio",
+      "description": "Stackportfolio plugin for Claude Code: manage your developer portfolio, sync projects, upload screenshots, and update your profile directly from your coding agent.",
+      "homepage": "https://stackportfol.io",
+      "repository": "https://github.com/Stackportfolio/claude-plugins",
+      "license": "MIT"
+    }
+  ]
+}
