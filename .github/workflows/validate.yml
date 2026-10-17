@@ -1,0 +1,31 @@
+name: Validate Plugin and Skills
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate manifests and skill frontmatter
+        run: node scripts/validate.mjs
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Validate marketplace manifest with Claude Code
+        run: claude plugin validate .
+
+      - name: Validate plugin manifest with Claude Code
+        run: claude plugin validate plugins/stackportfolio

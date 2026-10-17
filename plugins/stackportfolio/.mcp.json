@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "stackportfolio": {
+      "type": "http",
+      "url": "https://stackportfol.io/mcp"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "stackportfolio",
+  "description": "Stackportfolio plugin for Claude Code: manage your developer portfolio, sync projects, upload screenshots, and update your profile directly from your coding agent.",
+  "author": {
+    "name": "Stackportfolio",
+    "url": "https://stackportfol.io"
+  },
+  "homepage": "https://stackportfol.io",
+  "repository": "https://github.com/Stackportfolio/claude-plugins",
+  "license": "MIT",
+  "keywords": [
+    "stackportfolio",
+    "portfolio",
+    "developer-portfolio",
+    "mcp",
+    "projects",
+    "skills"
+  ]
+}

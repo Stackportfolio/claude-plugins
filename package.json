@@ -1,0 +1,12 @@
+{
+  "name": "stackportfolio-claude-plugins",
+  "version": "0.1.0",
+  "description": "Claude Code plugin and marketplace for Stackportfolio",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node scripts/validate.mjs",
+    "validate": "node scripts/validate.mjs"
+  },
+  "license": "MIT"
+}
