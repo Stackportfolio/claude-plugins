@@ -1,0 +1,17 @@
+{
+  "name": "fullstack-next-app",
+  "description": "Modern server-rendered web application with Next.js App Router and Prisma ORM.",
+  "origin": null,
+  "originUrl": null,
+  "deployedUrl": "https://next-fullstack.vercel.app",
+  "deployedUrlHints": [
+    {
+      "source": "package.json:homepage",
+      "url": "https://next-fullstack.vercel.app"
+    },
+    {
+      "source": "vercel.json:alias",
+      "url": "https://next-fullstack.vercel.app"
+    }
+  ]
+}

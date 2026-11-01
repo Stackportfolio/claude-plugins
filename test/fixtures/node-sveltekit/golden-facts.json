@@ -1,0 +1,13 @@
+{
+  "name": "node-sveltekit",
+  "description": "A showcase SvelteKit project with PostgreSQL and Tailwind CSS.",
+  "origin": null,
+  "originUrl": null,
+  "deployedUrl": "https://sveltekit.fixture.example.com",
+  "deployedUrlHints": [
+    {
+      "source": "CNAME",
+      "url": "https://sveltekit.fixture.example.com"
+    }
+  ]
+}

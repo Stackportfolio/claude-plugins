@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Axum",
+    "evidence": "Cargo.toml:8",
+    "kind": "framework"
+  },
+  {
+    "name": "Rust",
+    "evidence": "Cargo.toml:1",
+    "kind": "runtime"
+  },
+  {
+    "name": "SQLx",
+    "evidence": "Cargo.toml:9",
+    "kind": "db"
+  }
+]

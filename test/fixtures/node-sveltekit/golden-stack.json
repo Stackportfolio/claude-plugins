@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Node.js",
+    "evidence": "package.json:1",
+    "kind": "runtime"
+  },
+  {
+    "name": "PostgreSQL",
+    "evidence": "package.json:13",
+    "kind": "db"
+  },
+  {
+    "name": "Svelte",
+    "evidence": "package.json:10",
+    "kind": "framework"
+  },
+  {
+    "name": "SvelteKit",
+    "evidence": "package.json:9",
+    "kind": "framework"
+  },
+  {
+    "name": "Tailwind CSS",
+    "evidence": "package.json:11",
+    "kind": "framework"
+  },
+  {
+    "name": "TypeScript",
+    "evidence": "package.json:12",
+    "kind": "runtime"
+  }
+]

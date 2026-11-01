@@ -37,9 +37,12 @@ Use this skill after completing significant development work, refactors, or depe
 - Call `list_project_technologies` (`mcp__plugin_stackportfolio_stackportfolio__list_project_technologies`) with `projectId` to fetch currently listed technologies.
 
 ### Step 2: Analyze Local Repository Changes
-Inspect the local workspace:
+Inspect the local workspace using the bundled deterministic scripts:
+1. Run `node "${CLAUDE_PLUGIN_ROOT}/scripts/detect-stack.mjs" [target-dir]` to build the current evidenced technology list.
+2. Run `node "${CLAUDE_PLUGIN_ROOT}/scripts/repo-facts.mjs" [target-dir]` to inspect updated README descriptions and repository metadata.
+
 - Check `README.md` and repository manifests for updated descriptions.
-- Scan package manifests and lockfiles (`package.json`, `pnpm-lock.yaml`, `Cargo.lock`, `go.mod`, `poetry.lock`, Dockerfiles) to build the current evidenced technology list.
+- Scan package manifests and lockfiles via `detect-stack.mjs` to build the current evidenced technology list.
 - Use canonical naming for technologies (e.g. `PostgreSQL`, `TypeScript`, `Node.js`) to prevent creating pending-approval technology records.
 - Compare current evidenced technologies with technologies returned by `list_project_technologies`.
 

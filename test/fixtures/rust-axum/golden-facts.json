@@ -1,0 +1,8 @@
+{
+  "name": "rust-axum-service",
+  "description": "Asynchronous HTTP backend powered by Axum, Tokio, and SQLx.",
+  "origin": null,
+  "originUrl": null,
+  "deployedUrl": null,
+  "deployedUrlHints": []
+}

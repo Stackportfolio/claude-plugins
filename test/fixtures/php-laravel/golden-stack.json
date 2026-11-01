@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Laravel",
+    "evidence": "composer.json:7",
+    "kind": "framework"
+  },
+  {
+    "name": "PHP",
+    "evidence": "composer.json:6",
+    "kind": "runtime"
+  }
+]

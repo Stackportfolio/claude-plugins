@@ -1,0 +1,8 @@
+{
+  "name": "docker-infra",
+  "description": "Containerised cloud architecture with Terraform AWS deployment, Docker Compose local setup, and GitHub Actions CI.",
+  "origin": null,
+  "originUrl": null,
+  "deployedUrl": null,
+  "deployedUrlHints": []
+}
