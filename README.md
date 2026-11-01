@@ -66,7 +66,7 @@ When installed in Claude Code, this plugin registers the following skills namesp
 
 ### `/stackportfolio:upload-screenshots`
 - **Trigger**: "Upload screenshots to Stackportfolio", "Append screenshot to project gallery"
-- **What it does**: Appends screenshots (PNG, JPEG, WebP, still GIF) to a project's gallery with descriptive text, automatically setting the first upload as the cover image. Directs to the web dashboard for editing captions or removing media.
+- **What it does**: Uploads and manages screenshots (PNG, JPEG, WebP, still GIF) in a project's gallery via signed upload URLs or base64, automatically setting the first upload as the cover image. Supports updating captions, replacing assets, and removing media with confirmation.
 
 ### `/stackportfolio:update-profile`
 - **Trigger**: "Update my Stackportfolio headline", "Change my experience level or git handles"

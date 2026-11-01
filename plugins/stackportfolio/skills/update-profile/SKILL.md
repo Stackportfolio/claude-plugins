@@ -2,8 +2,8 @@
 name: update-profile
 description: Use when the user wants to change their Stackportfolio headline, experience level, git usernames, job-seeking status, salary preferences, or availability.
 allowed-tools:
-  - get_profile
-  - update_profile
+  - mcp__plugin_stackportfolio_stackportfolio__get_profile
+  - mcp__plugin_stackportfolio_stackportfolio__update_profile
 ---
 
 # /stackportfolio:update-profile
@@ -26,7 +26,7 @@ This skill allows you to inspect and modify developer tech profile information o
 ## Workflow
 
 ### Step 1: Read Current Profile
-Call `get_profile` to inspect current settings:
+Call `get_profile` (`mcp__plugin_stackportfolio_stackportfolio__get_profile`) to inspect current settings:
 - `title`: Job title / headline (e.g. "Senior Full-Stack Engineer")
 - `experienceLevel`: Experience tier (`junior`, `mid`, `senior`, `lead`)
 - `githubUsername`: GitHub handle
@@ -54,9 +54,9 @@ Ask the user or review their request for what supported tech profile fields need
 - Technologies and proficiency are derived automatically by Stackportfolio from projects, not edited directly on the profile.
 
 ### Step 3: Apply Updates
-Call `update_profile` passing only the fields to change.
+Call `update_profile` (`mcp__plugin_stackportfolio_stackportfolio__update_profile`) passing only the fields to change.
 - Optional fields (`preferredSalaryMin`, `preferredSalaryMax`, `availableDate`, git handles) can be cleared by sending `null`.
 - Unchanged fields should be omitted from the update payload.
 
 ### Step 4: Summary
-Output the updated profile summary and provide a link to view the public profile on Stackportfolio (`https://stackportfol.io/<username>`).
+Output the updated profile summary and provide a link to view the public profile on Stackportfolio (`https://stackportfol.io/u/<username>` or `/profile`).
