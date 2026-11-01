@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
-import { resolve, join, basename } from 'node:path';
+import { resolve, join } from 'node:path';
 
 const REPO_ROOT = resolve(process.cwd());
 const MARKETPLACE_PATH = join(REPO_ROOT, '.claude-plugin/marketplace.json');
@@ -8,9 +8,10 @@ const PLUGIN_PATH = join(REPO_ROOT, 'plugins/stackportfolio/.claude-plugin/plugi
 const MCP_CONFIG_PATH = join(REPO_ROOT, 'plugins/stackportfolio/.mcp.json');
 const SKILLS_DIR = join(REPO_ROOT, 'plugins/stackportfolio/skills');
 
-// Known MCP tool names mirrored from stackportfolio src/lib/server/mcp/tools.ts
+// Known MCP tool names mirrored from stackportfolio src/lib/server/mcp/tools.ts (29 tools)
 export const MCP_TOOLS_SNAPSHOT = new Set([
 	'whoami',
+	'search_documentation',
 	'get_profile',
 	'update_profile',
 	'list_projects',
@@ -19,7 +20,12 @@ export const MCP_TOOLS_SNAPSHOT = new Set([
 	'update_project',
 	'list_project_technologies',
 	'add_project_technology',
+	'list_project_media',
+	'create_project_media_upload',
 	'add_project_media',
+	'update_project_media',
+	'replace_project_media',
+	'remove_project_media',
 	'update_project_technology',
 	'remove_project_technology',
 	'list_project_contributors',
@@ -95,7 +101,66 @@ function parseFrontmatter(content, filePath) {
 	};
 }
 
-console.log('--- Validating Marketplace Manifest ---');
+function findAppToolsPath() {
+	const candidates = [
+		process.env.STACKPORTFOLIO_APP_DIR && join(process.env.STACKPORTFOLIO_APP_DIR, 'src/lib/server/mcp/tools.ts'),
+		process.env.APP_REPO_PATH && join(process.env.APP_REPO_PATH, 'src/lib/server/mcp/tools.ts'),
+		resolve(REPO_ROOT, '../stackportfolio-fullstack/src/lib/server/mcp/tools.ts'),
+		resolve(REPO_ROOT, '../../stackportfolio-fullstack/src/lib/server/mcp/tools.ts'),
+		resolve(REPO_ROOT, '../stackportfolio/src/lib/server/mcp/tools.ts')
+	].filter(Boolean);
+
+	for (const candidate of candidates) {
+		if (existsSync(candidate)) {
+			return candidate;
+		}
+	}
+	return null;
+}
+
+function loadAppTools(toolsPath) {
+	try {
+		const content = readFileSync(toolsPath, 'utf8');
+		const match = content.match(/export const MCP_TOOLS: McpTool\[\] = \[([\s\S]*?)\];/);
+		if (!match) {
+			error(`Could not locate 'export const MCP_TOOLS' array in ${toolsPath}`);
+			return null;
+		}
+		const toolNames = [...match[1].matchAll(/name:\s*['"]([a-zA-Z0-9_]+)['"]/g)].map((m) => m[1]);
+		return new Set(toolNames);
+	} catch (e) {
+		error(`Failed reading app tools from ${toolsPath}: ${e.message}`);
+		return null;
+	}
+}
+
+console.log('--- Validating App MCP Tools Integration ---');
+let knownTools = MCP_TOOLS_SNAPSHOT;
+const appToolsPath = findAppToolsPath();
+
+if (appToolsPath) {
+	const liveTools = loadAppTools(appToolsPath);
+	if (liveTools && liveTools.size > 0) {
+		const missingInSnapshot = [...liveTools].filter((t) => !MCP_TOOLS_SNAPSHOT.has(t));
+		const extraInSnapshot = [...MCP_TOOLS_SNAPSHOT].filter((t) => !liveTools.has(t));
+
+		if (missingInSnapshot.length > 0) {
+			error(`MCP_TOOLS_SNAPSHOT missing tools present in app repo: ${missingInSnapshot.join(', ')}`);
+		}
+		if (extraInSnapshot.length > 0) {
+			error(`MCP_TOOLS_SNAPSHOT contains extra tools not in app repo: ${extraInSnapshot.join(', ')}`);
+		}
+
+		if (missingInSnapshot.length === 0 && extraInSnapshot.length === 0) {
+			pass(`Loaded ${liveTools.size} MCP tools from app repo (${appToolsPath}) and verified MCP_TOOLS_SNAPSHOT is in sync`);
+		}
+		knownTools = liveTools;
+	}
+} else {
+	pass(`App repo tools.ts not found; validating against MCP_TOOLS_SNAPSHOT (${knownTools.size} tools)`);
+}
+
+console.log('\n--- Validating Marketplace Manifest ---');
 if (!existsSync(MARKETPLACE_PATH)) {
 	error(`marketplace.json missing at ${MARKETPLACE_PATH}`);
 } else {
@@ -114,8 +179,13 @@ if (!existsSync(MARKETPLACE_PATH)) {
 			const sp = json.plugins.find((p) => p.name === 'stackportfolio');
 			if (!sp) {
 				error(`marketplace.json plugins array missing 'stackportfolio' entry`);
-			} else if (sp.source !== './plugins/stackportfolio') {
-				error(`marketplace.json 'stackportfolio' source must be './plugins/stackportfolio'`);
+			} else {
+				if (sp.source !== './plugins/stackportfolio') {
+					error(`marketplace.json 'stackportfolio' source must be './plugins/stackportfolio'`);
+				}
+				if (!sp.version || typeof sp.version !== 'string') {
+					error(`marketplace.json 'stackportfolio' entry missing semver 'version'`);
+				}
 			}
 		}
 		pass('marketplace.json valid and matches requirements');
@@ -125,20 +195,28 @@ if (!existsSync(MARKETPLACE_PATH)) {
 }
 
 console.log('\n--- Validating Plugin Manifest ---');
+let pluginName = 'stackportfolio';
 if (!existsSync(PLUGIN_PATH)) {
 	error(`plugin.json missing at ${PLUGIN_PATH}`);
 } else {
 	try {
 		const raw = readFileSync(PLUGIN_PATH, 'utf8');
 		const json = JSON.parse(raw);
+		pluginName = json.name || 'stackportfolio';
 		if (json.name !== 'stackportfolio') {
 			error(`plugin.json name must be 'stackportfolio', got '${json.name}'`);
+		}
+		if (!json.version || typeof json.version !== 'string') {
+			error(`plugin.json version is required`);
 		}
 		if (!json.description || typeof json.description !== 'string') {
 			error(`plugin.json description is required`);
 		}
 		if (!json.author || json.author.name !== 'Stackportfolio') {
 			error(`plugin.json author.name must be 'Stackportfolio'`);
+		}
+		if (!json.privacyPolicyUrl || typeof json.privacyPolicyUrl !== 'string') {
+			error(`plugin.json privacyPolicyUrl is required`);
 		}
 		pass('plugin.json valid and matches requirements');
 	} catch (e) {
@@ -147,21 +225,25 @@ if (!existsSync(PLUGIN_PATH)) {
 }
 
 console.log('\n--- Validating .mcp.json Configuration ---');
+let serverName = 'stackportfolio';
 if (!existsSync(MCP_CONFIG_PATH)) {
 	error(`.mcp.json missing at ${MCP_CONFIG_PATH}`);
 } else {
 	try {
 		const raw = readFileSync(MCP_CONFIG_PATH, 'utf8');
 		const json = JSON.parse(raw);
-		const server = json?.mcpServers?.stackportfolio || json?.stackportfolio;
-		if (!server) {
+		const servers = json?.mcpServers || (json?.stackportfolio ? { stackportfolio: json.stackportfolio } : null);
+		const serverKeys = servers ? Object.keys(servers) : [];
+		if (serverKeys.length === 0) {
 			error(`.mcp.json missing server config for 'stackportfolio'`);
 		} else {
+			serverName = serverKeys[0];
+			const server = servers[serverName];
 			if (server.type !== 'http') {
-				error(`.mcp.json stackportfolio server type must be 'http', got '${server.type}'`);
+				error(`.mcp.json ${serverName} server type must be 'http', got '${server.type}'`);
 			}
 			if (server.url !== 'https://stackportfol.io/mcp') {
-				error(`.mcp.json stackportfolio server url must be 'https://stackportfol.io/mcp', got '${server.url}'`);
+				error(`.mcp.json ${serverName} server url must be 'https://stackportfol.io/mcp', got '${server.url}'`);
 			}
 		}
 		pass('.mcp.json valid and points to https://stackportfol.io/mcp');
@@ -169,6 +251,9 @@ if (!existsSync(MCP_CONFIG_PATH)) {
 		error(`Failed parsing .mcp.json: ${e.message}`);
 	}
 }
+
+const EXPECTED_TOOL_PREFIX = `mcp__plugin_${pluginName}_${serverName}__`;
+console.log(`\nExpected plugin MCP tool prefix: '${EXPECTED_TOOL_PREFIX}'`);
 
 console.log('\n--- Validating Skills ---');
 if (!existsSync(SKILLS_DIR)) {
@@ -207,15 +292,27 @@ if (!existsSync(SKILLS_DIR)) {
 			error(`${skillPath}: frontmatter description missing or invalid`);
 		}
 
-		// Allowed tools check
+		// Allowed tools check (must use real plugin MCP tool name form: mcp__plugin_<plugin>_<server>__<tool>)
 		if (!Array.isArray(frontmatter['allowed-tools']) || frontmatter['allowed-tools'].length === 0) {
 			error(`${skillPath}: frontmatter allowed-tools must be a non-empty list`);
 		} else {
 			for (const tool of frontmatter['allowed-tools']) {
-				if (!MCP_TOOLS_SNAPSHOT.has(tool)) {
-					error(`${skillPath}: allowed-tools references unknown tool '${tool}' (not in MCP_TOOLS)`);
+				if (!tool.startsWith(EXPECTED_TOOL_PREFIX)) {
+					error(
+						`${skillPath}: allowed-tools entry '${tool}' does not match plugin MCP naming rule '${EXPECTED_TOOL_PREFIX}<tool>'`
+					);
+					continue;
+				}
+				const bareName = tool.slice(EXPECTED_TOOL_PREFIX.length);
+				if (!knownTools.has(bareName)) {
+					error(`${skillPath}: allowed-tools references unknown tool '${bareName}' (full: '${tool}')`);
 				}
 			}
+		}
+
+		// Check for outdated /p/ links
+		if (body.includes('/p/')) {
+			error(`${skillPath}: contains outdated route '/p/'; must use '/projects/'`);
 		}
 
 		// Shared rules check in body
@@ -239,7 +336,7 @@ if (!existsSync(SKILLS_DIR)) {
 			error(`${skillPath}: body missing no project deletion rule`);
 		}
 
-		pass(`skill '${dir}' valid (frontmatter, allowed-tools, and shared rules verified)`);
+		pass(`skill '${dir}' valid (frontmatter, allowed-tools, routes, and shared rules verified)`);
 	}
 }
 

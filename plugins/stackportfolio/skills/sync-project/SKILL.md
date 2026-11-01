@@ -2,13 +2,13 @@
 name: sync-project
 description: Use after significant work in a repo already on Stackportfolio, to refresh its description, tech list and status.
 allowed-tools:
-  - list_projects
-  - get_project
-  - update_project
-  - list_project_technologies
-  - add_project_technology
-  - update_project_technology
-  - remove_project_technology
+  - mcp__plugin_stackportfolio_stackportfolio__list_projects
+  - mcp__plugin_stackportfolio_stackportfolio__get_project
+  - mcp__plugin_stackportfolio_stackportfolio__update_project
+  - mcp__plugin_stackportfolio_stackportfolio__list_project_technologies
+  - mcp__plugin_stackportfolio_stackportfolio__add_project_technology
+  - mcp__plugin_stackportfolio_stackportfolio__update_project_technology
+  - mcp__plugin_stackportfolio_stackportfolio__remove_project_technology
 ---
 
 # /stackportfolio:sync-project
@@ -26,20 +26,21 @@ Use this skill after completing significant development work, refactors, or depe
 3. **Confirm before destructive calls**: ALWAYS prompt for user confirmation before calling destructive tools such as `remove_project_technology`, explaining that removing a technology deletes contributor evidence and recomputes proficiency scores.
 4. **Verbatim error surfacing**: Report all API errors in the exact `{error: {code, message}}` structure returned by the server.
 5. **Scope error recovery**: If an API error indicates insufficient scope (e.g. `INSUFFICIENT_SCOPE`), instruct the user to re-run `/mcp` (or run `claude mcp login stackportfolio`) to re-authorize.
-6. **No project deletion**: `projects:delete` is not granted in OAuth scopes; never attempt or promise project deletion.
+6. **No project deletion**: `projects:delete` is not granted in OAuth scopes; never attempt or promise project deletion via the agent. Projects may be managed or deleted directly in the Stackportfolio web interface.
 
 ## Workflow
 
 ### Step 1: Match Local Repo with Stackportfolio Project
-- Call `list_projects` (scope `"mine"`) to list the user's projects.
+- Call `list_projects` (`mcp__plugin_stackportfolio_stackportfolio__list_projects`, scope `"mine"`) to list the user's projects.
 - Match by git remote origin URL (`git remote get-url origin`) or project title.
-- Call `get_project(projectId)` to fetch current recorded details (name, description, visibility, status).
-- Call `list_project_technologies(projectId)` to fetch currently listed technologies.
+- Call `get_project` (`mcp__plugin_stackportfolio_stackportfolio__get_project`) with `projectId` to fetch current recorded details (name, description, visibility, active status).
+- Call `list_project_technologies` (`mcp__plugin_stackportfolio_stackportfolio__list_project_technologies`) with `projectId` to fetch currently listed technologies.
 
 ### Step 2: Analyze Local Repository Changes
 Inspect the local workspace:
 - Check `README.md` and repository manifests for updated descriptions.
 - Scan package manifests and lockfiles (`package.json`, `pnpm-lock.yaml`, `Cargo.lock`, `go.mod`, `poetry.lock`, Dockerfiles) to build the current evidenced technology list.
+- Use canonical naming for technologies (e.g. `PostgreSQL`, `TypeScript`, `Node.js`) to prevent creating pending-approval technology records.
 - Compare current evidenced technologies with technologies returned by `list_project_technologies`.
 
 ### Step 3: Classify Technology Diffs
@@ -53,17 +54,20 @@ Identify changes into three groups:
 ### Step 4: Review Changes with User
 Present a clear summary diff to the user:
 - Description / metadata updates (if any)
-- Technologies to add
+- Status changes (e.g. parking or reactivating a project)
+- Technologies to add (canonical names)
 - Technologies to mark as former / replaced
 - Technologies proposed for removal (requiring confirmation)
 
 Wait for user approval.
 
 ### Step 5: Execute Updates
-- **Metadata**: If name, description, or visibility changed, call `update_project(projectId, ...)` sending only changed fields.
-- **Add technologies**: For each new technology, call `add_project_technology(projectId, name)`.
-- **Update former technologies**: For replaced technologies, call `update_project_technology(projectId, technologyId, former: true, replacedBy: <id>)`.
-- **Remove technologies**: Only upon confirmed user request, call `remove_project_technology(projectId, technologyId)`.
+- **Metadata and Status**: Call `update_project` (`mcp__plugin_stackportfolio_stackportfolio__update_project`) sending only changed fields (`name`, `description`, `visibility`, `deactivated`).
+  - `update_project` can also replace the full active technology list at once by providing the complete `technologies: string[]` array.
+  - **Drafts and active-project limit (409)**: Setting `deactivated: false` reactivates a parked project. If the owner is already at their active-project limit, the API returns a 409 conflict error (`The owner is at their active-project limit. Deactivate another project first.`). The user must deactivate another project first before reactivating.
+- **Add technologies individually**: For new technologies not replaced in bulk, call `add_project_technology` (`mcp__plugin_stackportfolio_stackportfolio__add_project_technology`) with `projectId` and `name`.
+- **Update former technologies**: For replaced technologies, call `update_project_technology` (`mcp__plugin_stackportfolio_stackportfolio__update_project_technology`) with `projectId`, `technologyId`, `former: true`, and optional `replacedBy`.
+- **Remove technologies**: Only upon confirmed user request, call `remove_project_technology` (`mcp__plugin_stackportfolio_stackportfolio__remove_project_technology`) with `projectId` and `technologyId`.
 
 ### Step 6: Summary
-Display a concise summary of all changes synchronized, with a link to the updated project page: `https://stackportfol.io/p/<projectId>`.
+Display a concise summary of all changes synchronized, with a link to the updated project page: `https://stackportfol.io/projects/<projectId>`.

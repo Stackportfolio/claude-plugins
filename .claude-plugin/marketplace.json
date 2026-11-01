@@ -9,6 +9,7 @@
   "plugins": [
     {
       "name": "stackportfolio",
+      "version": "0.1.0",
       "source": "./plugins/stackportfolio",
       "description": "Stackportfolio plugin for Claude Code: manage your developer portfolio, sync projects, upload screenshots, and update your profile directly from your coding agent.",
       "homepage": "https://stackportfol.io",
