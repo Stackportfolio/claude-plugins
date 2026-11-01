@@ -34,11 +34,14 @@ Call `whoami` (`mcp__plugin_stackportfolio_stackportfolio__whoami`) to verify th
 - If not signed in or the call fails with an authorization error, prompt the user to run `/mcp` to connect their Stackportfolio account.
 
 ### Step 2: Inspect Repository Evidence
-Inspect the local workspace to collect project details:
-- **Project Name**: Check repository root manifests (`package.json`, `Cargo.toml`, `go.mod`, etc.) or the repository root directory name.
-- **Description**: Read the repository's `README.md` or package manifest description field.
-- **Repository URL**: Inspect git remotes (e.g., `git remote get-url origin`) to obtain the canonical repository URL.
-- **Technologies**: Scan dependencies and lockfiles. Extract valid canonical technology names (frameworks, runtimes, primary libraries, databases, cloud tooling) that are directly evidenced. Use canonical naming (e.g. `PostgreSQL`, `TypeScript`, `Node.js`) because unknown or aliased names create a pending-approval technology record.
+Inspect the local workspace using the bundled deterministic scripts:
+1. Run `node "${CLAUDE_PLUGIN_ROOT}/scripts/repo-facts.mjs" [target-dir]` to extract repository name, description, origin, and deployment hints.
+2. Run `node "${CLAUDE_PLUGIN_ROOT}/scripts/detect-stack.mjs" [target-dir]` to detect evidenced technologies and frameworks (add `--all-deps` if including developer tooling like linters/testers).
+
+- **Project Name**: Check repository root manifests (`package.json`, `Cargo.toml`, `go.mod`, etc.) or the repository root directory name, as returned by `repo-facts.mjs`.
+- **Description**: Read the repository's `README.md` or package manifest description field, as extracted by `repo-facts.mjs`.
+- **Repository URL**: Inspect git remotes (e.g., `git remote get-url origin` or parsed `.git/config`), as extracted by `repo-facts.mjs`.
+- **Technologies**: Scan dependencies and lockfiles via `detect-stack.mjs`. Extract valid canonical technology names (frameworks, runtimes, primary libraries, databases, cloud tooling) that are directly evidenced. Use canonical naming (e.g. `PostgreSQL`, `TypeScript`, `Node.js`) because unknown or aliased names create a pending-approval technology record.
 
 ### Step 3: Check for Existing Projects
 Call `list_projects` (`mcp__plugin_stackportfolio_stackportfolio__list_projects`, default scope `"mine"`) to check if a project with the same name or repository URL already exists in the user's portfolio.

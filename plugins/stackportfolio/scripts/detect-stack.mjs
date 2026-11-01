@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync, statSync, realpathSync } from 'node:fs';
 import { resolve, join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
 	matchDependency,
 	DOCKER_IMAGE_MAP,
@@ -757,9 +758,16 @@ export function detectStack(repoPath, options = {}) {
 }
 
 // CLI execution check
-const isCli = import.meta.url === `file://${process.argv[1]}`;
-if (isCli) {
-	const args = process.argv.slice(2);
+export function isMainModule(metaUrl) {
+	if (!process.argv[1]) return false;
+	try {
+		return fileURLToPath(metaUrl) === realpathSync(process.argv[1]);
+	} catch {
+		return false;
+	}
+}
+
+export function runCli(args = process.argv.slice(2)) {
 	let repo = '.';
 	const options = { includeDev: false };
 
@@ -778,4 +786,8 @@ if (isCli) {
 		console.error(`Error: ${err.message}`);
 		process.exit(1);
 	}
+}
+
+if (isMainModule(import.meta.url)) {
+	runCli();
 }

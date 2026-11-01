@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { resolve, join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const REPO_ROOT = resolve(process.cwd());
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const MARKETPLACE_PATH = join(REPO_ROOT, '.claude-plugin/marketplace.json');
 const PLUGIN_PATH = join(REPO_ROOT, 'plugins/stackportfolio/.claude-plugin/plugin.json');
 const MCP_CONFIG_PATH = join(REPO_ROOT, 'plugins/stackportfolio/.mcp.json');
 const SKILLS_DIR = join(REPO_ROOT, 'plugins/stackportfolio/skills');
 
-// Known MCP tool names mirrored from stackportfolio src/lib/server/mcp/tools.ts (29 tools)
+// Known MCP tool names mirrored from stackportfolio src/lib/server/mcp/tools.ts (30 tools)
 export const MCP_TOOLS_SNAPSHOT = new Set([
 	'whoami',
 	'search_documentation',
+	'search_technologies',
 	'get_profile',
 	'update_profile',
 	'list_projects',

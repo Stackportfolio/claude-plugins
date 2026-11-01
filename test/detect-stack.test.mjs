@@ -1,17 +1,25 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { resolve, join, dirname } from 'node:path';
+import {
+	readFileSync,
+	readdirSync,
+	statSync,
+	mkdtempSync,
+	rmSync,
+	symlinkSync,
+	writeFileSync
+} from 'node:fs';
+import { resolve, join, dirname, relative } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { detectStack } from '../plugins/stackportfolio/skills/add-project/scripts/detect-stack.mjs';
+import { detectStack } from '../plugins/stackportfolio/scripts/detect-stack.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = resolve(__dirname, '..');
 const FIXTURES_DIR = join(__dirname, 'fixtures');
-const SCRIPT_PATH = resolve(
-	__dirname,
-	'../plugins/stackportfolio/skills/add-project/scripts/detect-stack.mjs'
-);
+const PLUGIN_ROOT = resolve(__dirname, '../plugins/stackportfolio');
+const SCRIPT_PATH = resolve(PLUGIN_ROOT, 'scripts/detect-stack.mjs');
 
 describe('detect-stack', () => {
 	it('matches all golden-stack fixtures', () => {
@@ -19,7 +27,7 @@ describe('detect-stack', () => {
 			statSync(join(FIXTURES_DIR, f)).isDirectory()
 		);
 
-		assert.ok(fixtureDirs.length >= 7, 'Expected at least 7 ecosystem fixtures');
+		assert.ok(fixtureDirs.length >= 8, 'Expected at least 8 ecosystem fixtures');
 
 		for (const fixture of fixtureDirs) {
 			const fixturePath = join(FIXTURES_DIR, fixture);
@@ -64,6 +72,34 @@ describe('detect-stack', () => {
 		);
 	});
 
+	it('detects Vite and Webpack in dependencies and devDependencies as build frameworks', () => {
+		const tempRepo = mkdtempSync(join(tmpdir(), 'vite-webpack-test-'));
+		try {
+			writeFileSync(
+				join(tempRepo, 'package.json'),
+				JSON.stringify({
+					name: 'test-vite-app',
+					version: '1.0.0',
+					devDependencies: {
+						vite: '^5.0.0',
+						webpack: '^5.89.0'
+					}
+				})
+			);
+
+			const stack = detectStack(tempRepo);
+			const names = stack.map((s) => s.name);
+			assert.ok(names.includes('Vite'), 'Expected Vite in detected stack');
+			assert.ok(names.includes('Webpack'), 'Expected Webpack in detected stack');
+			assert.ok(names.includes('Node.js'), 'Expected Node.js in detected stack');
+
+			const viteEntry = stack.find((s) => s.name === 'Vite');
+			assert.strictEqual(viteEntry.kind, 'framework');
+		} finally {
+			rmSync(tempRepo, { recursive: true, force: true });
+		}
+	});
+
 	it('runs cleanly as CLI script with JSON output', () => {
 		const fixturePath = join(FIXTURES_DIR, 'go-gin');
 		const stdout = execFileSync('node', [SCRIPT_PATH, fixturePath], {
@@ -84,6 +120,51 @@ describe('detect-stack', () => {
 
 		const parsed = JSON.parse(stdout);
 		assert.ok(parsed.some((p) => p.name === 'ESLint'));
+	});
+
+	it('spawns through each documented invocation path and asserts valid JSON', () => {
+		const fixturePath = join(FIXTURES_DIR, 'node-sveltekit');
+
+		// Path 1: Absolute path simulating ${CLAUDE_PLUGIN_ROOT}/scripts/detect-stack.mjs
+		const pluginRootScript = join(PLUGIN_ROOT, 'scripts/detect-stack.mjs');
+		const out1 = execFileSync('node', [pluginRootScript, fixturePath], {
+			encoding: 'utf8',
+			cwd: REPO_ROOT
+		});
+		const parsed1 = JSON.parse(out1);
+		assert.ok(Array.isArray(parsed1) && parsed1.length > 0, 'Expected non-empty array from plugin root path');
+
+		// Path 2: Relative path invocation
+		const relScript = relative(REPO_ROOT, pluginRootScript);
+		const out2 = execFileSync('node', [relScript, fixturePath], {
+			encoding: 'utf8',
+			cwd: REPO_ROOT
+		});
+		const parsed2 = JSON.parse(out2);
+		assert.deepStrictEqual(parsed1, parsed2, 'Relative invocation should match absolute invocation');
+	});
+
+	it('spawns through a symlinked directory and asserts non-empty valid JSON', () => {
+		const tempDir = mkdtempSync(join(tmpdir(), 'detect-sym-'));
+		try {
+			const symlinkedPluginRoot = join(tempDir, 'plugin-symlink');
+			symlinkSync(PLUGIN_ROOT, symlinkedPluginRoot, 'dir');
+
+			const symlinkedScript = join(symlinkedPluginRoot, 'scripts/detect-stack.mjs');
+			const fixturePath = join(FIXTURES_DIR, 'go-gin');
+
+			const stdout = execFileSync('node', [symlinkedScript, fixturePath], {
+				encoding: 'utf8',
+				cwd: tempDir
+			});
+
+			assert.ok(stdout.trim().length > 0, 'Stdout should not be empty when run through symlink');
+			const parsed = JSON.parse(stdout);
+			assert.ok(Array.isArray(parsed) && parsed.length === 3);
+			assert.deepStrictEqual(parsed.map((p) => p.name), ['Gin', 'Go', 'PostgreSQL']);
+		} finally {
+			rmSync(tempDir, { recursive: true, force: true });
+		}
 	});
 
 	it('deduplicates multiple evidences for the same technology prioritizing manifests', () => {

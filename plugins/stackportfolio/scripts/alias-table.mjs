@@ -183,6 +183,11 @@ export const ALIAS_TABLE = [
 	},
 	{ name: 'Azure', kind: 'infra', match: ['azure', '@azure'] },
 
+	// Build tools
+	{ name: 'Vite', kind: 'framework', isDevNoise: false, match: ['vite'] },
+	{ name: 'Webpack', kind: 'framework', isDevNoise: false, match: ['webpack'] },
+	{ name: 'Babel', kind: 'framework', isDevNoise: false, match: ['@babel/core', 'babel-core'] },
+
 	// Dev tools & testing (flagged as dev noise by default)
 	{ name: 'ESLint', kind: 'infra', isDevNoise: true, match: ['eslint'] },
 	{ name: 'Prettier', kind: 'infra', isDevNoise: true, match: ['prettier'] },
@@ -190,6 +195,8 @@ export const ALIAS_TABLE = [
 	{ name: 'Vitest', kind: 'framework', isDevNoise: true, match: ['vitest'] },
 	{ name: 'Playwright', kind: 'infra', isDevNoise: true, match: ['@playwright/test', 'playwright'] },
 	{ name: 'Cypress', kind: 'infra', isDevNoise: true, match: ['cypress'] },
+	{ name: 'Selenium', kind: 'infra', isDevNoise: true, match: ['selenium-webdriver'] },
+	{ name: 'Storybook', kind: 'framework', isDevNoise: true, match: ['storybook', '@storybook/react', '@storybook/vue3', '@storybook/svelte', '@storybook/core'] },
 	{ name: 'pytest', kind: 'framework', isDevNoise: true, match: ['pytest'] },
 	{ name: 'PHPUnit', kind: 'framework', isDevNoise: true, match: ['phpunit/phpunit', 'phpunit'] },
 	{ name: 'RSpec', kind: 'framework', isDevNoise: true, match: ['rspec', 'rspec-rails'] }

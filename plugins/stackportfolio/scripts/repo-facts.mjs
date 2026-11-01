@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { readFileSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, existsSync, statSync, realpathSync } from 'node:fs';
 import { resolve, join, basename } from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 /**
  * Normalises a git remote URL into a standard https:// URL without trailing .git.
@@ -40,7 +40,8 @@ export function normaliseOriginUrl(rawUrl) {
 }
 
 /**
- * Extracts origin remote URL from git repository.
+ * Extracts origin remote URL from git repository using pure fs.
+ * Handles both standard .git directories and git worktree gitdir: pointers.
  */
 function getGitOrigin(repoDir) {
 	const gitEntry = join(repoDir, '.git');
@@ -48,37 +49,59 @@ function getGitOrigin(repoDir) {
 
 	let configContent = null;
 
-	if (statSync(gitEntry).isDirectory()) {
-		const cfgPath = join(gitEntry, 'config');
-		if (existsSync(cfgPath)) {
-			try {
+	try {
+		if (statSync(gitEntry).isDirectory()) {
+			const cfgPath = join(gitEntry, 'config');
+			if (existsSync(cfgPath)) {
 				configContent = readFileSync(cfgPath, 'utf8');
-			} catch {
-				// ignore
 			}
-		}
-	} else if (statSync(gitEntry).isFile()) {
-		// Worktree pointer: gitdir: <path>
-		try {
+		} else if (statSync(gitEntry).isFile()) {
+			// Worktree pointer: gitdir: <path>
 			const pointer = readFileSync(gitEntry, 'utf8').trim();
 			const match = pointer.match(/^gitdir:\s*(.+)$/m);
 			if (match) {
 				const gitDir = resolve(repoDir, match[1]);
-				// In worktrees, config may be at <gitDir>/config or parent repo
-				for (const candidate of [
+
+				// Check for commondir inside gitDir
+				let commondir = null;
+				const commondirPath = join(gitDir, 'commondir');
+				if (existsSync(commondirPath)) {
+					try {
+						const cd = readFileSync(commondirPath, 'utf8').trim();
+						commondir = resolve(gitDir, cd);
+					} catch {
+						// ignore
+					}
+				}
+
+				const candidates = [
+					join(gitDir, 'config.worktree'),
 					join(gitDir, 'config'),
+					commondir && join(commondir, 'config'),
 					join(gitDir, '../config'),
 					join(gitDir, '../../config')
-				]) {
+				].filter(Boolean);
+
+				for (const candidate of candidates) {
 					if (existsSync(candidate)) {
-						configContent = readFileSync(candidate, 'utf8');
-						break;
+						try {
+							const c = readFileSync(candidate, 'utf8');
+							if (c && /\[remote\s+["']origin["']\]/m.test(c)) {
+								configContent = c;
+								break;
+							}
+							if (!configContent) {
+								configContent = c;
+							}
+						} catch {
+							// ignore
+						}
 					}
 				}
 			}
-		} catch {
-			// ignore
 		}
+	} catch {
+		return null;
 	}
 
 	if (configContent) {
@@ -91,16 +114,7 @@ function getGitOrigin(repoDir) {
 		}
 	}
 
-	// Fallback to git CLI if git is installed
-	try {
-		const out = execFileSync('git', ['-C', repoDir, 'remote', 'get-url', 'origin'], {
-			encoding: 'utf8',
-			stdio: ['ignore', 'pipe', 'ignore']
-		}).trim();
-		return normaliseOriginUrl(out);
-	} catch {
-		return null;
-	}
+	return null;
 }
 
 /**
@@ -186,18 +200,49 @@ function extractRepoName(repoDir, originUrl) {
 }
 
 /**
- * Cleans markdown formatting from paragraph text.
+ * Cleans markdown formatting and HTML tags/comments from paragraph text.
  */
-function cleanMarkdownText(text) {
+export function cleanMarkdownText(text) {
+	if (!text || typeof text !== 'string') return '';
 	let cleaned = text;
 
 	// Remove HTML comments
 	cleaned = cleaned.replace(/<!--[\s\S]*?-->/g, '');
 
+	// Remove script and style tags
+	cleaned = cleaned.replace(/<script[\s\S]*?<\/script>/gi, '');
+	cleaned = cleaned.replace(/<style[\s\S]*?<\/style>/gi, '');
+
+	// Remove HTML headings (<h1...>...</h1> to <h6...>...</h6>)
+	cleaned = cleaned.replace(/<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>/gi, '');
+
+	// Remove standalone markdown headings inside the block
+	cleaned = cleaned.replace(/^#+\s+[^\r\n]*/gm, '');
+
+	// Remove HTML images
+	cleaned = cleaned.replace(/<img[^>]*>/gi, '');
+
+	// Strip linked markdown badges and images
+	cleaned = cleaned.replace(/\[!\[[^\]]*\]\([^)]+\)\]\([^)]+\)/g, '');
+	cleaned = cleaned.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
+
 	// Strip link markup [text](url) -> text
 	cleaned = cleaned.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
 
-	// Strip bold and italic **text** or *text*
+	// Strip all remaining HTML tags
+	cleaned = cleaned.replace(/<[^>]+>/g, '');
+
+	// Decode common HTML entities
+	cleaned = cleaned
+		.replace(/&quot;/g, '"')
+		.replace(/&apos;/g, "'")
+		.replace(/&#39;/g, "'")
+		.replace(/&amp;/g, '&')
+		.replace(/&lt;/g, '<')
+		.replace(/&gt;/g, '>')
+		.replace(/&nbsp;/g, ' ');
+
+	// Strip bold and italic **text** or *text* or __text__ or _text_
 	cleaned = cleaned.replace(/\*\*([^*]+)\*\*/g, '$1');
 	cleaned = cleaned.replace(/\*([^*]+)\*/g, '$1');
 	cleaned = cleaned.replace(/__([^_]+)__/g, '$1');
@@ -205,6 +250,9 @@ function cleanMarkdownText(text) {
 
 	// Strip inline code `code`
 	cleaned = cleaned.replace(/`([^`]+)`/g, '$1');
+
+	// Strip leading blockquote indicators
+	cleaned = cleaned.replace(/^>\s*/gm, '');
 
 	// Collapse all whitespace into single spaces
 	cleaned = cleaned.replace(/\s+/g, ' ').trim();
@@ -245,21 +293,12 @@ function extractReadmeParagraph(repoDir) {
 					const trimmed = para.trim();
 					if (!trimmed) continue;
 
-					// Skip headings
+					// Skip headings or divider lines
 					if (/^#+\s+/.test(trimmed) || /^===+$/.test(trimmed) || /^---+$/.test(trimmed)) {
 						continue;
 					}
 
-					// Skip paragraphs that only contain badges or images
-					const withoutBadges = trimmed
-						.replace(/\[!\[[^\]]*\]\([^)]+\)\]\([^)]+\)/g, '')
-						.replace(/!\[[^\]]*\]\([^)]+\)/g, '')
-						.replace(/<img[^>]*>/g, '')
-						.trim();
-
-					if (!withoutBadges) continue;
-
-					const cleaned = cleanMarkdownText(withoutBadges);
+					const cleaned = cleanMarkdownText(trimmed);
 					if (cleaned.length > 0) {
 						return cleaned;
 					}
@@ -415,9 +454,17 @@ export function getRepoFacts(repoPath) {
 }
 
 // CLI execution check
-const isCli = import.meta.url === `file://${process.argv[1]}`;
-if (isCli) {
-	const repo = process.argv[2] || '.';
+export function isMainModule(metaUrl) {
+	if (!process.argv[1]) return false;
+	try {
+		return fileURLToPath(metaUrl) === realpathSync(process.argv[1]);
+	} catch {
+		return false;
+	}
+}
+
+export function runCli(argv = process.argv.slice(2)) {
+	const repo = argv[0] || '.';
 	try {
 		const facts = getRepoFacts(repo);
 		process.stdout.write(JSON.stringify(facts, null, 2) + '\n');
@@ -425,4 +472,8 @@ if (isCli) {
 		console.error(`Error: ${err.message}`);
 		process.exit(1);
 	}
+}
+
+if (isMainModule(import.meta.url)) {
+	runCli();
 }
