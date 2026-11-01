@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
 
 jobs:
   validate:
@@ -20,6 +23,17 @@ jobs:
 
       - name: Validate manifests and skill frontmatter
         run: node scripts/validate.mjs
+
+      - name: Run OpenAPI contract guard against staging
+        env:
+          STACKPORTFOLIO_OPENAPI_BASIC_AUTH: ${{ secrets.STAGING_BASIC_AUTH }}
+        run: |
+          if [ -z "$STACKPORTFOLIO_OPENAPI_BASIC_AUTH" ]; then
+            echo "::notice title=Contract guard skipped::STAGING_BASIC_AUTH secret is not set (e.g. fork PR); skipping contract guard against staging."
+            node scripts/contract.mjs
+          else
+            node scripts/contract.mjs
+          fi
 
       - name: Run unit and fixture tests
         run: node --test test/*.test.mjs
