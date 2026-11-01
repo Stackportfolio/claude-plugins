@@ -9,24 +9,78 @@ import { sniffImageType } from './find-images.mjs';
 const execFileAsync = promisify(execFile);
 
 /**
- * Redacts query strings from URLs for secure logging.
+ * Redacts upload capability tokens and query strings from URLs for secure logging.
  * Protects HMAC signatures and single-use upload capability tokens from transcripts.
  */
 export function redactUrl(rawUrl) {
 	if (!rawUrl || typeof rawUrl !== 'string') return '';
 	try {
 		const u = new URL(rawUrl);
-		if (u.search) {
-			return `${u.origin}${u.pathname}?[query truncated]`;
+		let pathname = u.pathname;
+		if (pathname.startsWith('/api/v1/uploads/')) {
+			const parts = pathname.split('/');
+			if (parts.length > 4 && parts[4]) {
+				parts[4] = '[token truncated]';
+				pathname = parts.join('/');
+			}
 		}
-		return `${u.origin}${u.pathname}`;
+		const search = u.search ? '?[query truncated]' : '';
+		return `${u.origin}${pathname}${search}`;
 	} catch {
-		const qIdx = rawUrl.indexOf('?');
+		let redacted = rawUrl;
+		const qIdx = redacted.indexOf('?');
 		if (qIdx !== -1) {
-			return `${rawUrl.slice(0, qIdx)}?[query truncated]`;
+			redacted = `${redacted.slice(0, qIdx)}?[query truncated]`;
 		}
-		return rawUrl;
+		redacted = redacted.replace(/(\/api\/v1\/uploads\/)[^/?#]+/, '$1[token truncated]');
+		return redacted;
 	}
+}
+
+/**
+ * Sanitizes an error message or string by stripping the full target URL,
+ * the upload token from /api/v1/uploads/<token>, and query string parameters.
+ */
+export function sanitizeErrorMessage(errMsg, targetUrl, redactedTarget) {
+	if (!errMsg || typeof errMsg !== 'string') return errMsg;
+	let sanitized = errMsg;
+	if (targetUrl) {
+		sanitized = sanitized.replaceAll(targetUrl, redactedTarget || redactUrl(targetUrl));
+	}
+	try {
+		const u = new URL(targetUrl);
+		if (u.pathname.startsWith('/api/v1/uploads/')) {
+			const parts = u.pathname.split('/');
+			if (parts.length > 4 && parts[4]) {
+				sanitized = sanitized.replaceAll(parts[4], '[token truncated]');
+			}
+		}
+		if (u.search && u.search.length > 1) {
+			sanitized = sanitized.replaceAll(u.search.slice(1), '[query truncated]');
+		}
+	} catch {
+		const match = targetUrl?.match(/\/api\/v1\/uploads\/([^/?#]+)/);
+		if (match && match[1]) {
+			sanitized = sanitized.replaceAll(match[1], '[token truncated]');
+		}
+	}
+	return sanitized;
+}
+
+function sanitizeError(errObj, targetUrl, redactedTarget) {
+	if (typeof errObj === 'string') {
+		return sanitizeErrorMessage(errObj, targetUrl, redactedTarget);
+	}
+	if (errObj && typeof errObj === 'object') {
+		try {
+			const jsonStr = JSON.stringify(errObj);
+			const sanitized = sanitizeErrorMessage(jsonStr, targetUrl, redactedTarget);
+			return JSON.parse(sanitized);
+		} catch {
+			return errObj;
+		}
+	}
+	return errObj;
 }
 
 /**
@@ -62,7 +116,7 @@ export async function putUpload(targetUrl, filePath, options = {}) {
 
 	// Fallback to curl if fetch is unavailable or explicitly forced
 	if (typeof fetch !== 'function' || options.forceCurl) {
-		return putUploadCurl(targetUrl, resolvedFile, contentType, fileBytes.byteLength, redactedTarget);
+		return await putUploadCurl(targetUrl, resolvedFile, contentType, fileBytes.byteLength, redactedTarget);
 	}
 
 	try {
@@ -91,7 +145,7 @@ export async function putUpload(targetUrl, filePath, options = {}) {
 				file: filePath,
 				contentType,
 				size: fileBytes.byteLength,
-				error: responseBody || `HTTP ${response.status}`
+				error: sanitizeError(responseBody, targetUrl, redactedTarget) || `HTTP ${response.status}`
 			};
 		}
 
@@ -108,24 +162,27 @@ export async function putUpload(targetUrl, filePath, options = {}) {
 		// If fetch failed due to environment, attempt curl fallback
 		if (!options.noCurlFallback) {
 			try {
-				return putUploadCurl(targetUrl, resolvedFile, contentType, fileBytes.byteLength, redactedTarget);
+				return await putUploadCurl(targetUrl, resolvedFile, contentType, fileBytes.byteLength, redactedTarget);
 			} catch (curlErr) {
+				const safeFetchErr = sanitizeErrorMessage(err.message, targetUrl, redactedTarget);
+				const safeCurlErr = sanitizeErrorMessage(curlErr.message, targetUrl, redactedTarget);
 				return {
 					ok: false,
 					status: 0,
 					target: redactedTarget,
 					file: filePath,
-					error: `Fetch error (${err.message}) and curl fallback failed (${curlErr.message})`
+					error: `Fetch error (${safeFetchErr}) and curl fallback failed (${safeCurlErr})`
 				};
 			}
 		}
 
+		const safeErr = sanitizeErrorMessage(err.message, targetUrl, redactedTarget);
 		return {
 			ok: false,
 			status: 0,
 			target: redactedTarget,
 			file: filePath,
-			error: err.message
+			error: safeErr
 		};
 	}
 }
@@ -171,9 +228,10 @@ async function putUploadCurl(targetUrl, resolvedFile, contentType, size, redacte
 			contentType,
 			size,
 			response: isOk ? responseBody : undefined,
-			error: !isOk ? responseBody || `HTTP ${statusCode}` : undefined
+			error: !isOk ? sanitizeError(responseBody, targetUrl, redactedTarget) || `HTTP ${statusCode}` : undefined
 		};
 	} catch (err) {
+		const safeErr = sanitizeErrorMessage(err.message, targetUrl, redactedTarget);
 		return {
 			ok: false,
 			status: 0,
@@ -181,7 +239,7 @@ async function putUploadCurl(targetUrl, resolvedFile, contentType, size, redacte
 			file: resolvedFile,
 			contentType,
 			size,
-			error: `curl execution failed: ${err.message}`
+			error: `curl execution failed: ${safeErr}`
 		};
 	}
 }
@@ -222,12 +280,14 @@ export async function runCli(argv = process.argv.slice(2)) {
 			process.exit(1);
 		}
 	} catch (err) {
+		const redacted = redactUrl(targetUrl);
+		const safeErr = sanitizeErrorMessage(err.message, targetUrl, redacted);
 		console.error(
 			JSON.stringify(
 				{
 					ok: false,
-					target: redactUrl(targetUrl),
-					error: err.message
+					target: redacted,
+					error: safeErr
 				},
 				null,
 				2

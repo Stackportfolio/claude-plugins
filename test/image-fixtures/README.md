@@ -13,8 +13,5 @@ And a preview banner:
 Also an animated demonstration:
 ![Demo](assets/animation.gif)
 
-Oversized hero graphic:
-![Hero](docs/oversize.png)
-
 And a broken reference to a missing file:
 ![Missing Chart](docs/missing-chart.png)

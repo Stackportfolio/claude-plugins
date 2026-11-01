@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import {
 	findImages,
@@ -61,12 +61,25 @@ describe('find-images', () => {
 	});
 
 	it('refuses oversize file with clear reason exceeding 5 MiB ceiling', () => {
-		const result = findImages(REPO_WITH_IMAGES);
-		const oversize = result.rejected.find((c) => c.path === 'docs/oversize.png');
-		assert.ok(oversize, 'oversize.png must be present in rejected candidates');
-		assert.strictEqual(oversize.valid, false);
-		assert.ok(oversize.size > MAX_IMAGE_BYTES);
-		assert.ok(oversize.reason.includes('exceeds server maximum of 5 MiB'));
+		const tempDir = mkdtempSync(join(tmpdir(), 'img-oversize-'));
+		try {
+			const docsDir = join(tempDir, 'docs');
+			mkdirSync(docsDir, { recursive: true });
+			const oversizeFile = join(docsDir, 'oversize.png');
+			const buf = Buffer.alloc(MAX_IMAGE_BYTES + 1024);
+			// Valid PNG magic bytes: 89 50 4E 47 0D 0A 1A 0A
+			Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(buf, 0);
+			writeFileSync(oversizeFile, buf);
+
+			const result = findImages(tempDir);
+			const oversize = result.rejected.find((c) => c.path === 'docs/oversize.png');
+			assert.ok(oversize, 'oversize.png must be present in rejected candidates');
+			assert.strictEqual(oversize.valid, false);
+			assert.ok(oversize.size > MAX_IMAGE_BYTES);
+			assert.ok(oversize.reason.includes('exceeds server maximum of 5 MiB'));
+		} finally {
+			rmSync(tempDir, { recursive: true, force: true });
+		}
 	});
 
 	it('refuses GIF candidate per server rule citing API operation constraints', () => {
@@ -119,6 +132,6 @@ describe('find-images', () => {
 		const parsed = JSON.parse(stdout);
 		assert.strictEqual(parsed.repo, REPO_WITH_IMAGES);
 		assert.strictEqual(parsed.valid.length, 3);
-		assert.strictEqual(parsed.rejected.length, 3);
+		assert.strictEqual(parsed.rejected.length, 2);
 	});
 });

@@ -99,7 +99,7 @@ Call `list_project_media` (`mcp__plugin_stackportfolio_stackportfolio__list_proj
 
 ### Step 7: Manage Existing Media (Captioning, Replace, Remove)
 For any existing media item in the gallery:
-- **Edit caption or alt text**: Call `update_project_media` with `projectId`, `mediaId`, and updated `caption` or `alt`.
+- **Edit caption or alt text**: Call `update_project_media` with `projectId`, `mediaId`, and updated `caption` or `altText`.
 - **Replace image**: Call `replace_project_media` (`mcp__plugin_stackportfolio_stackportfolio__replace_project_media`) with `projectId`, `mediaId`, and new base64 `data`.
 - **Remove image**: Removal permanently deletes the database record and all responsive WebP variant files from storage. **ALWAYS confirm with the user before calling `remove_project_media`**. Once confirmed, call `remove_project_media` (`mcp__plugin_stackportfolio_stackportfolio__remove_project_media`) with `projectId` and `mediaId`.
 
