@@ -1,0 +1,10 @@
+[project]
+name = "python-fastapi-service"
+version = "0.1.0"
+description = "High performance API service built with FastAPI and PostgreSQL."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110.0",
+    "psycopg2-binary>=2.9.9",
+    "redis>=5.0.0"
+]

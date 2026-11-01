@@ -1,0 +1,13 @@
+[package]
+name = "rust-axum-service"
+version = "0.1.0"
+edition = "2021"
+description = "Asynchronous HTTP backend powered by Axum, Tokio, and SQLx."
+
+[dependencies]
+axum = "0.7.5"
+sqlx = { version = "0.7.4", features = ["postgres", "runtime-tokio"] }
+tokio = { version = "1.38.0", features = ["full"] }
+
+[dev-dependencies]
+mockall = "0.12.1"

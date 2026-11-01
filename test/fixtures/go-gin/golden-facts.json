@@ -1,0 +1,8 @@
+{
+  "name": "go-gin-api",
+  "description": "Lightweight microservice skeleton written in Go with Gin and PostgreSQL database driver.",
+  "origin": null,
+  "originUrl": null,
+  "deployedUrl": null,
+  "deployedUrlHints": []
+}

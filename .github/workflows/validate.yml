@@ -21,6 +21,9 @@ jobs:
       - name: Validate manifests and skill frontmatter
         run: node scripts/validate.mjs
 
+      - name: Run unit and fixture tests
+        run: node --test test/*.test.mjs
+
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code
 

@@ -1,0 +1,22 @@
+[
+  {
+    "name": "FastAPI",
+    "evidence": "pyproject.toml:7",
+    "kind": "framework"
+  },
+  {
+    "name": "PostgreSQL",
+    "evidence": "pyproject.toml:8",
+    "kind": "db"
+  },
+  {
+    "name": "Python",
+    "evidence": ".python-version:1",
+    "kind": "runtime"
+  },
+  {
+    "name": "Redis",
+    "evidence": "pyproject.toml:9",
+    "kind": "db"
+  }
+]

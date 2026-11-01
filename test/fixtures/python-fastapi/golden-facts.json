@@ -1,0 +1,8 @@
+{
+  "name": "python-fastapi-service",
+  "description": "Modern async REST API for processing background jobs.",
+  "origin": null,
+  "originUrl": null,
+  "deployedUrl": null,
+  "deployedUrlHints": []
+}

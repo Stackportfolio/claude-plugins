@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Next.js",
+    "evidence": "package.json:6",
+    "kind": "framework"
+  },
+  {
+    "name": "Node.js",
+    "evidence": "package.json:1",
+    "kind": "runtime"
+  },
+  {
+    "name": "Prisma",
+    "evidence": "package.json:9",
+    "kind": "db"
+  },
+  {
+    "name": "React",
+    "evidence": "package.json:7",
+    "kind": "framework"
+  },
+  {
+    "name": "TypeScript",
+    "evidence": "package.json:13",
+    "kind": "runtime"
+  },
+  {
+    "name": "Vercel",
+    "evidence": "vercel.json:1",
+    "kind": "infra"
+  }
+]

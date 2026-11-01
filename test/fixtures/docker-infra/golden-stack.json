@@ -1,0 +1,42 @@
+[
+  {
+    "name": "AWS",
+    "evidence": "main.tf:5",
+    "kind": "infra"
+  },
+  {
+    "name": "Docker",
+    "evidence": "Dockerfile:1",
+    "kind": "infra"
+  },
+  {
+    "name": "Docker Compose",
+    "evidence": "compose.yaml:1",
+    "kind": "infra"
+  },
+  {
+    "name": "GitHub Actions",
+    "evidence": ".github/workflows/ci.yml:1",
+    "kind": "infra"
+  },
+  {
+    "name": "Node.js",
+    "evidence": "Dockerfile:1",
+    "kind": "runtime"
+  },
+  {
+    "name": "PostgreSQL",
+    "evidence": "compose.yaml:9",
+    "kind": "db"
+  },
+  {
+    "name": "Redis",
+    "evidence": "compose.yaml:13",
+    "kind": "db"
+  },
+  {
+    "name": "Terraform",
+    "evidence": "main.tf:1",
+    "kind": "infra"
+  }
+]

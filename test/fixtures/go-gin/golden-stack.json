@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Gin",
+    "evidence": "go.mod:6",
+    "kind": "framework"
+  },
+  {
+    "name": "Go",
+    "evidence": "go.mod:3",
+    "kind": "runtime"
+  },
+  {
+    "name": "PostgreSQL",
+    "evidence": "go.mod:7",
+    "kind": "db"
+  }
+]

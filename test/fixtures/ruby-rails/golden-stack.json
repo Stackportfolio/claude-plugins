@@ -1,0 +1,22 @@
+[
+  {
+    "name": "PostgreSQL",
+    "evidence": "Gemfile:6",
+    "kind": "db"
+  },
+  {
+    "name": "Rails",
+    "evidence": "Gemfile:5",
+    "kind": "framework"
+  },
+  {
+    "name": "Redis",
+    "evidence": "Gemfile:7",
+    "kind": "db"
+  },
+  {
+    "name": "Ruby",
+    "evidence": "Gemfile:3",
+    "kind": "runtime"
+  }
+]

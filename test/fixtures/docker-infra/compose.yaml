@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://user:pass@postgres:5432/db
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: db
+  redis:
+    image: redis:7-alpine
