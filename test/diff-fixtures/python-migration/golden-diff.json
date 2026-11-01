@@ -7,13 +7,7 @@
       "version": null
     }
   ],
-  "remove": [
-    {
-      "id": "20000000-0000-0000-0000-000000000005",
-      "name": "Celery",
-      "version": null
-    }
-  ],
+  "remove": [],
   "version": [
     {
       "id": "20000000-0000-0000-0000-000000000001",
@@ -33,7 +27,7 @@
       "id": "20000000-0000-0000-0000-000000000005",
       "name": "Celery",
       "currentVersion": null,
-      "replacedBy": "RQ",
+      "replacedByName": "RQ",
       "reason": "No longer detected in repository manifests"
     }
   ],
@@ -50,6 +44,7 @@
     }
   ],
   "proposedTechnologies": [
+    "Celery",
     "FastAPI@0.110",
     "PostgreSQL",
     "Python@3.12",

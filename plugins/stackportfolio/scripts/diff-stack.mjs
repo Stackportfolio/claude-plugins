@@ -198,20 +198,23 @@ export function diffStack(localInput, remoteInput, options = {}) {
 	for (const [normRem, remoteItem] of remoteMap.entries()) {
 		if (!localMap.has(normRem)) {
 			const remVer = normVersion(remoteItem.version);
-			remove.push({
-				id: remoteItem.id || null,
-				name: remoteItem.name,
-				version: remVer
-			});
-
 			const replacement = findReplacementProposal(remoteItem, add);
-			former.push({
-				id: remoteItem.id || null,
-				name: remoteItem.name,
-				currentVersion: remVer,
-				replacedBy: replacement,
-				reason: 'No longer detected in repository manifests'
-			});
+
+			if (replacement) {
+				former.push({
+					id: remoteItem.id || null,
+					name: remoteItem.name,
+					currentVersion: remVer,
+					replacedByName: replacement,
+					reason: 'No longer detected in repository manifests'
+				});
+			} else {
+				remove.push({
+					id: remoteItem.id || null,
+					name: remoteItem.name,
+					version: remVer
+				});
+			}
 		}
 	}
 
@@ -223,18 +226,36 @@ export function diffStack(localInput, remoteInput, options = {}) {
 	former.sort((a, b) => a.name.localeCompare(b.name));
 
 	// 4. Build proposed active technologies array for update_project replace
-	const proposed = [];
+	// Contract: update_project replaces the entire list of technologies on the project,
+	// including both active and former technologies. Any attached technology omitted
+	// from technologies[] is immediately deleted by the backend.
+	// Therefore, proposedTechnologies retains every technology the user has not
+	// confirmed for deletion: unchanged, version-bumped, added, already-former,
+	// and those being marked former. Only confirmed plain removals leave the list.
+	const proposedMap = new Map();
+	function addProposed(name, version) {
+		const key = normName(name);
+		const formatted = version ? `${name}@${version}` : name;
+		proposedMap.set(key, formatted);
+	}
+
+	for (const item of alreadyFormerRemote) {
+		addProposed(item.name, normVersion(item.version));
+	}
+	for (const item of former) {
+		addProposed(item.name, item.currentVersion);
+	}
 	for (const item of unchanged) {
-		proposed.push(item.version ? `${item.name}@${item.version}` : item.name);
+		addProposed(item.name, item.version);
 	}
 	for (const item of version) {
-		proposed.push(
-			item.proposedVersion ? `${item.name}@${item.proposedVersion}` : item.name
-		);
+		addProposed(item.name, item.proposedVersion);
 	}
 	for (const item of add) {
-		proposed.push(item.version ? `${item.name}@${item.version}` : item.name);
+		addProposed(item.name, item.version);
 	}
+
+	const proposed = Array.from(proposedMap.values());
 	proposed.sort((a, b) => a.localeCompare(b));
 
 	return {

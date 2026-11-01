@@ -50,11 +50,11 @@ Run the bundled deterministic scripts (check `node --version` first; fall back t
    (or pipe the JSON output of `list_project_technologies` directly into `diff-stack.mjs`).
    - The script outputs a structured diff JSON containing:
      - `add`: New technologies detected locally.
-     - `remove`: Active recorded technologies no longer detected locally.
+     - `remove`: Plain removals — recorded active technologies no longer detected locally that lack replacement evidence.
      - `version`: Recorded technologies whose version differs locally.
-     - `former`: Proposed former technologies with suggested replacements (e.g. Webpack -> Vite).
+     - `former`: Proposed former transitions for technologies no longer detected locally that have replacement evidence (e.g. Celery -> RQ, Webpack -> Vite) with suggested replacement name (`replacedByName`).
      - `unchanged`: Technologies matching without modifications.
-     - `proposedTechnologies`: Pre-sorted array of active technologies ready for `update_project`.
+     - `proposedTechnologies`: Complete replacement array ready for `update_project`, retaining unchanged, version-bumped, added, already-former, and to-be-former technologies.
 3. If new technologies are present in `add`:
    Optionally call `search_technologies` (`mcp__plugin_stackportfolio_stackportfolio__search_technologies`) with `{ names: [...] }` to resolve canonical names and verify approval status.
 
@@ -63,23 +63,32 @@ Present a categorized summary to the user:
 - **Metadata updates**: Updated description or title from README/manifests (if changed).
 - **New technologies to add**: Evidenced locally but not yet on Stackportfolio.
 - **Version updates**: Local version vs currently recorded version.
-- **Former technologies proposal**: Technologies the project moved away from. Explain that marking a technology as former (`former: true`, with optional `replacedBy`) preserves historical contributor proficiency.
-- **Removals**: Technologies proposed for removal.
-  - **Confirm one by one**: Because removal deletes contributor evidence, every removal MUST be confirmed individually with the user. For each removed technology, ask whether the user wants to remove it, keep it, or mark it as former instead.
+- **Former technologies proposal**: Evidenced transitions where the project moved from one technology to another (with `replacedByName`). Explain that marking a technology as former (`former: true`, with `replacedBy`) preserves historical contributor proficiency. If the user declines marking a technology as former, ask whether to keep it active or remove it.
+- **Removals**: Plain removals (technologies removed without detected replacements).
+  - **Confirm one by one**: Because removal deletes contributor evidence and recomputes proficiency, every removal MUST be confirmed individually with the user. For each removed technology, ask whether the user wants to remove it, keep it, or manually mark it as former instead.
 
 ### Step 4: Execute Updates via `update_project`
 Once the user confirms the proposal:
 1. **Atomic Technology Replacement**:
    Call `update_project` (`mcp__plugin_stackportfolio_stackportfolio__update_project`) with:
    - `projectId`: Target project id
-   - `technologies`: Full replacement array of active technologies (e.g. `proposedTechnologies`, adjusted for any declined removals).
-     Supplying `technologies[]` replaces the active list in a single atomic operation.
+   - `technologies`: Full replacement array of all retained technologies (active, version-bumped, added, already-former, and to-be-former).
+     **Crucial Contract**: In Stackportfolio, `update_project`'s `technologies[]` replaces the complete list of technologies attached to the project. Any technology attached to the project (active OR former) that is omitted from `technologies[]` is immediately and permanently deleted, destroying contributor evidence.
+     - `diff-stack.mjs`'s `proposedTechnologies` already preserves unchanged, version-bumped, added, already-former, and to-be-former technologies.
+     - Only confirmed removals (technologies the user explicitly approved deleting) must be excluded from `technologies[]`.
+     - Retaining an existing technology row in `technologies[]` does not overwrite its `former` or `replacedBy` status on the server.
+     - If the user declined any removal in Step 3, ensure that declined technology is added back into `technologies[]`.
    - Send any updated metadata fields (`name`, `description`, `visibility`, `deactivated`).
    - **Drafts and active-project limit (409)**: Setting `deactivated: false` reactivates a parked project. If the owner is already at their active-project limit, the API returns a 409 conflict error (`The owner is at their active-project limit. Deactivate another project first.`).
 2. **Update Former Technologies**:
-   For any technologies agreed to be marked as former:
-   Call `update_project_technology` (`mcp__plugin_stackportfolio_stackportfolio__update_project_technology`) with:
-   `projectId`, `technologyId`, `former: true`, and optional `replacedBy`.
+   For any technologies agreed to be marked as former (from `diff.former` or user request):
+   - **Resolve `replacedBy` UUID**: The `update_project_technology` tool accepts `replacedBy` as the **UUID** (`technologyId`) of the replacement technology attached to the project, NOT a technology name.
+   - Look up the replacement technology's UUID from the `technologies[]` array returned by the `update_project` call (or from `list_project_technologies`) by matching the replacement technology's name (e.g. from `replacedByName`).
+   - Call `update_project_technology` (`mcp__plugin_stackportfolio_stackportfolio__update_project_technology`) with:
+     - `projectId`: Target project id
+     - `technologyId`: UUID of the technology being marked former
+     - `former`: `true`
+     - `replacedBy`: UUID of the replacement technology (or `null` if no replacement)
 3. **Individual Fallbacks**:
    If individual modifications are needed instead of bulk replacement, call `add_project_technology` or `remove_project_technology` accordingly.
 

@@ -64,7 +64,7 @@ describe('diff-stack', () => {
 		assert.strictEqual(actual.unchanged.length, 3);
 	});
 
-	it('ignores already-former technologies from removals', () => {
+	it('ignores already-former technologies from removals and retains them in proposedTechnologies', () => {
 		const fixturePath = join(DIFF_FIXTURES_DIR, 'already-former');
 		const localPath = join(fixturePath, 'local.json');
 		const remotePath = join(fixturePath, 'remote.json');
@@ -75,6 +75,22 @@ describe('diff-stack', () => {
 
 		assert.deepStrictEqual(actual, expected);
 		assert.strictEqual(actual.remove.some((r) => r.name === 'jQuery'), false);
+		assert.ok(actual.proposedTechnologies.includes('jQuery'));
+		assert.ok(actual.proposedTechnologies.includes('React'));
+	});
+
+	it('proves to-be-former rows stay in proposedTechnologies in python-migration', () => {
+		const fixturePath = join(DIFF_FIXTURES_DIR, 'python-migration');
+		const localPath = join(fixturePath, 'local.json');
+		const remotePath = join(fixturePath, 'remote.json');
+
+		const actual = diffStack(localPath, remotePath);
+		assert.strictEqual(actual.former.length, 1);
+		assert.strictEqual(actual.former[0].name, 'Celery');
+		assert.strictEqual(actual.former[0].replacedByName, 'RQ');
+		assert.strictEqual(actual.remove.length, 0);
+		assert.ok(actual.proposedTechnologies.includes('Celery'));
+		assert.ok(actual.proposedTechnologies.includes('RQ'));
 	});
 
 	it('performs case-insensitive technology matching', () => {
@@ -104,7 +120,7 @@ describe('diff-stack', () => {
 		assert.deepStrictEqual(result.proposedTechnologies, ['Svelte', 'TypeScript']);
 	});
 
-	it('handles empty local as all removals and former proposals', () => {
+	it('handles empty local as plain removals without former proposals when evidence is absent', () => {
 		const local = [];
 		const remote = [
 			{ id: 'u-1', name: 'Webpack', version: null, former: false },
@@ -114,8 +130,38 @@ describe('diff-stack', () => {
 		const result = diffStack(local, remote);
 		assert.strictEqual(result.add.length, 0);
 		assert.strictEqual(result.remove.length, 2);
-		assert.strictEqual(result.former.length, 2);
+		assert.strictEqual(result.former.length, 0);
 		assert.strictEqual(result.proposedTechnologies.length, 0);
+	});
+
+	it('proposes removals as former with replacedByName only with replacement evidence, keeping them in proposedTechnologies', () => {
+		const local = [{ name: 'Vitest', evidence: 'package.json:5', kind: 'framework' }];
+		const remote = [
+			{ id: 'rem-1', name: 'Jest', version: '29.0', former: false }
+		];
+
+		const result = diffStack(local, remote);
+		assert.strictEqual(result.former.length, 1);
+		assert.strictEqual(result.former[0].name, 'Jest');
+		assert.strictEqual(result.former[0].replacedByName, 'Vitest');
+		assert.strictEqual(result.remove.length, 0);
+		assert.ok(result.proposedTechnologies.includes('Jest@29.0'));
+		assert.ok(result.proposedTechnologies.includes('Vitest'));
+	});
+
+	it('treats removals as plain removals when replacement evidence is absent, omitting them from proposedTechnologies', () => {
+		const local = [{ name: 'TypeScript', evidence: 'package.json:1', kind: 'runtime' }];
+		const remote = [
+			{ id: 'rem-2', name: 'Ruby', version: '3.2', former: false }
+		];
+
+		const result = diffStack(local, remote);
+		assert.strictEqual(result.remove.length, 1);
+		assert.strictEqual(result.remove[0].name, 'Ruby');
+		assert.strictEqual(result.former.length, 0);
+		assert.strictEqual(result.proposedTechnologies.includes('Ruby@3.2'), false);
+		assert.strictEqual(result.proposedTechnologies.includes('Ruby'), false);
+		assert.ok(result.proposedTechnologies.includes('TypeScript'));
 	});
 
 	it('runs cleanly as CLI script with file arguments', () => {

@@ -27,15 +27,7 @@
     }
   ],
   "version": [],
-  "former": [
-    {
-      "id": "44444444-4444-4444-4444-444444444444",
-      "name": "Webpack",
-      "currentVersion": null,
-      "replacedBy": null,
-      "reason": "No longer detected in repository manifests"
-    }
-  ],
+  "former": [],
   "unchanged": [
     {
       "id": "11111111-1111-1111-1111-111111111111",
