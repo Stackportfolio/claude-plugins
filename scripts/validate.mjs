@@ -294,14 +294,21 @@ if (!existsSync(SKILLS_DIR)) {
 			error(`${skillPath}: frontmatter description missing or invalid`);
 		}
 
-		// Allowed tools check (must use real plugin MCP tool name form: mcp__plugin_<plugin>_<server>__<tool>)
+		// Allowed tools check (must use real plugin MCP tool name form or Bash permission pattern)
 		if (!Array.isArray(frontmatter['allowed-tools']) || frontmatter['allowed-tools'].length === 0) {
 			error(`${skillPath}: frontmatter allowed-tools must be a non-empty list`);
 		} else {
 			for (const tool of frontmatter['allowed-tools']) {
+				if (tool.startsWith('Bash(') && tool.endsWith(')')) {
+					const pattern = tool.slice(5, -1).trim();
+					if (!pattern.startsWith('node ') && !pattern.startsWith('curl ')) {
+						error(`${skillPath}: unexpected Bash pattern in allowed-tools: '${tool}'`);
+					}
+					continue;
+				}
 				if (!tool.startsWith(EXPECTED_TOOL_PREFIX)) {
 					error(
-						`${skillPath}: allowed-tools entry '${tool}' does not match plugin MCP naming rule '${EXPECTED_TOOL_PREFIX}<tool>'`
+						`${skillPath}: allowed-tools entry '${tool}' does not match plugin MCP naming rule '${EXPECTED_TOOL_PREFIX}<tool>' or Bash pattern`
 					);
 					continue;
 				}
