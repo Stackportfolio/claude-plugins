@@ -1,0 +1,59 @@
+{
+  "add": [
+    {
+      "name": "RQ",
+      "evidence": "pyproject.toml:12",
+      "kind": "framework",
+      "version": null
+    }
+  ],
+  "remove": [
+    {
+      "id": "20000000-0000-0000-0000-000000000005",
+      "name": "Celery",
+      "version": null
+    }
+  ],
+  "version": [
+    {
+      "id": "20000000-0000-0000-0000-000000000001",
+      "name": "FastAPI",
+      "currentVersion": "0.109",
+      "proposedVersion": "0.110"
+    },
+    {
+      "id": "20000000-0000-0000-0000-000000000003",
+      "name": "Python",
+      "currentVersion": "3.11",
+      "proposedVersion": "3.12"
+    }
+  ],
+  "former": [
+    {
+      "id": "20000000-0000-0000-0000-000000000005",
+      "name": "Celery",
+      "currentVersion": null,
+      "replacedBy": "RQ",
+      "reason": "No longer detected in repository manifests"
+    }
+  ],
+  "unchanged": [
+    {
+      "id": "20000000-0000-0000-0000-000000000002",
+      "name": "PostgreSQL",
+      "version": null
+    },
+    {
+      "id": "20000000-0000-0000-0000-000000000004",
+      "name": "Redis",
+      "version": null
+    }
+  ],
+  "proposedTechnologies": [
+    "FastAPI@0.110",
+    "PostgreSQL",
+    "Python@3.12",
+    "Redis",
+    "RQ"
+  ]
+}

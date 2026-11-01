@@ -1,0 +1,7 @@
+[
+  {
+    "name": "React",
+    "evidence": "package.json:10",
+    "kind": "framework"
+  }
+]

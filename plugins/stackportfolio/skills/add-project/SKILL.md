@@ -4,10 +4,12 @@ description: Use when the user wants to add the current repo (or a named one) to
 allowed-tools:
   - mcp__plugin_stackportfolio_stackportfolio__whoami
   - mcp__plugin_stackportfolio_stackportfolio__list_projects
+  - mcp__plugin_stackportfolio_stackportfolio__search_technologies
   - mcp__plugin_stackportfolio_stackportfolio__create_project
   - mcp__plugin_stackportfolio_stackportfolio__add_project_technology
   - mcp__plugin_stackportfolio_stackportfolio__create_project_media_upload
   - mcp__plugin_stackportfolio_stackportfolio__add_project_media
+  - Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/*)
 ---
 
 # /stackportfolio:add-project
@@ -16,7 +18,7 @@ Add a local repository or named project to your Stackportfolio profile.
 
 ## Overview
 
-This skill guides you through inspecting the current repository (or a named one), extracting evidenced metadata and technologies, checking for existing projects to avoid duplicates, confirming project details, creating the project in Stackportfolio, and linking evidenced technologies and media.
+This skill inspects the repository using local deterministic scripts, resolves detected technologies against the Stackportfolio technology catalogue via `search_technologies`, presents a clear confirmation table with evidence and approval flags, creates the project and its evidenced technologies in a single `create_project` call, offers an optional hand-off to upload screenshots, and offers to save an opt-in `.stackportfolio.json` link file for exact future synchronization.
 
 ## Rules & Constraints
 
@@ -34,55 +36,78 @@ Call `whoami` (`mcp__plugin_stackportfolio_stackportfolio__whoami`) to verify th
 - If not signed in or the call fails with an authorization error, prompt the user to run `/mcp` to connect their Stackportfolio account.
 
 ### Step 2: Inspect Repository Evidence
-Inspect the local workspace using the bundled deterministic scripts:
-1. Run `node "${CLAUDE_PLUGIN_ROOT}/scripts/repo-facts.mjs" [target-dir]` to extract repository name, description, origin, and deployment hints.
-2. Run `node "${CLAUDE_PLUGIN_ROOT}/scripts/detect-stack.mjs" [target-dir]` to detect evidenced technologies and frameworks (add `--all-deps` if including developer tooling like linters/testers).
+Inspect the local workspace using the bundled deterministic scripts (check `node --version` first; if Node is unavailable, fall back to manual manifest inspection):
+1. Run `node "${CLAUDE_PLUGIN_ROOT}/scripts/repo-facts.mjs" [target-dir]` to extract repository name, description, git remote origin, and deployment hints.
+2. Run `node "${CLAUDE_PLUGIN_ROOT}/scripts/detect-stack.mjs" [target-dir]` to detect evidenced technologies and frameworks (add `--all-deps` if the user wants developer tooling such as linters and test frameworks included).
 
-- **Project Name**: Check repository root manifests (`package.json`, `Cargo.toml`, `go.mod`, etc.) or the repository root directory name, as returned by `repo-facts.mjs`.
-- **Description**: Read the repository's `README.md` or package manifest description field, as extracted by `repo-facts.mjs`.
-- **Repository URL**: Inspect git remotes (e.g., `git remote get-url origin` or parsed `.git/config`), as extracted by `repo-facts.mjs`.
-- **Technologies**: Scan dependencies and lockfiles via `detect-stack.mjs`. Extract valid canonical technology names (frameworks, runtimes, primary libraries, databases, cloud tooling) that are directly evidenced. Use canonical naming (e.g. `PostgreSQL`, `TypeScript`, `Node.js`) because unknown or aliased names create a pending-approval technology record.
+- **Project Name**: Check repository root manifests (`package.json`, `Cargo.toml`, `go.mod`, etc.) or root directory name, as returned by `repo-facts.mjs`.
+- **Description**: Read the repository's `README.md` or package manifest description, as extracted by `repo-facts.mjs`.
+- **Repository URL**: Extracted from git remotes (`git remote get-url origin` or parsed `.git/config`) by `repo-facts.mjs`.
+- **Technologies**: Evidenced dependencies, runtimes, and frameworks returned by `detect-stack.mjs`.
 
-### Step 3: Check for Existing Projects
+### Step 3: Resolve Names with Catalogue
+Batch-resolve detected technologies using the `search_technologies` MCP tool (`mcp__plugin_stackportfolio_stackportfolio__search_technologies`):
+- Pass the array of detected names: `search_technologies({ names: ["SvelteKit", "TypeScript", ...] })` (up to 100 names).
+- For each detected technology:
+  - Match against the returned catalogue items by name or aliases.
+  - If matched in catalogue and `isApproved: true`: mark as `Approved` canonical name.
+  - If matched in catalogue and `isApproved: false`: mark as `Pending approval`.
+  - If not found in catalogue: retain detected name, mark with flag `NEW (pending approval)`. Stackportfolio permits creating new technologies, but they will await administrative approval.
+
+### Step 4: Check for Existing Projects
 Call `list_projects` (`mcp__plugin_stackportfolio_stackportfolio__list_projects`, default scope `"mine"`) to check if a project with the same name or repository URL already exists in the user's portfolio.
 - If an existing project matches, inform the user and suggest running `/stackportfolio:sync-project` instead of creating a duplicate.
 
-### Step 4: Confirm Details with User
-Present the proposed project details to the user:
-- Name
-- Description
-- Visibility: `private` (default), `connections`, or `public` (API default is `private`)
-- Repository URL
-- Evidenced technologies list (canonical names)
-- Active-project limit note: If the user is at their plan's active-project limit, the project will still be created, but in an inactive/draft state (`isActive: false`, `deactivatedAt` set).
+### Step 5: Present Confirmation Table to User
+Present the project summary and technology confirmation table to the user:
 
-Wait for user confirmation or adjustments before proceeding to creation.
+```markdown
+### Proposed Technologies
+| Technology | Evidence | Canonical Match | Status |
+| :--- | :--- | :--- | :--- |
+| SvelteKit | package.json:9 | SvelteKit | Approved |
+| PostgreSQL | package.json:13 | PostgreSQL | Approved |
+| CustomTool | package.json:20 | CustomTool | NEW (pending approval) |
+```
 
-### Step 5: Create Project
+Present project configuration:
+- **Title**: Name proposed from manifests
+- **Description**: Summary extracted from README
+- **Visibility**: `private` (default), `connections`, or `public` (API default is `private`)
+- **Repository URL**: Git origin URL
+- **Active-project limit note**: If the user is at their plan's active-project limit, the project is still created, but in an inactive/draft state (`isActive: false`, `deactivatedAt` set).
+
+Wait for user confirmation or adjustments before proceeding to create the project.
+
+### Step 6: Create Project in One Call
 Call `create_project` (`mcp__plugin_stackportfolio_stackportfolio__create_project`) with:
 - `name`: Project title
 - `description`: Project summary
 - `visibility`: Selected visibility (`private`, `connections`, or `public`; default is `private`)
 - `repositoryUrl`: Git repository link (if public or shareable)
-- `technologies`: Array of canonical technology names (e.g. `["TypeScript", "SvelteKit", "PostgreSQL"]`). Supplying technologies here attaches them at creation in a single operation.
+- `technologies`: Array of canonical technology names (e.g. `["SvelteKit", "TypeScript", "PostgreSQL"]`). Supplying `technologies[]` attaches them at creation in a single atomic call.
 
 Capture the returned `id` (`projectId`).
 - If the owner has reached their active-project allowance, the project is created in an inactive state (`isActive: false`, `deactivatedAt` populated). Inform the user that it can be activated in project settings or by deactivating another project.
+- (If bulk technology attachment was skipped or fails, fall back to calling `add_project_technology` for each technology).
 
-### Step 6: Add Evidenced Technologies
-If technologies were not passed during `create_project`, or if adding further evidenced technologies individually:
-- Call `add_project_technology` (`mcp__plugin_stackportfolio_stackportfolio__add_project_technology`) with `projectId` and `name`.
-- Note: This credits the technology to the project owner and accepted contributors.
-
-### Step 7: Optional Screenshots / Media
+### Step 7: Optional Screenshots / Media Hand-off
 If screenshots exist in `assets/`, `docs/`, `screenshots/`, or a path specified by the user:
-- **Signed upload (recommended)**: Call `create_project_media_upload` (`mcp__plugin_stackportfolio_stackportfolio__create_project_media_upload`) with `projectId` and optional `description` to request an HMAC-signed, single-use, 10-minute PUT URL. Then upload the raw image directly:
+- Ask the user if they wish to upload screenshots now or hand off to `/stackportfolio:upload-screenshots`.
+- **Signed upload (recommended)**: Call `create_project_media_upload` (`mcp__plugin_stackportfolio_stackportfolio__create_project_media_upload`) with `projectId` and optional description to request a single-use 10-minute signed PUT URL, then upload directly:
   `curl -T shot.png -H "Content-Type: image/png" "<uploadUrl>"`
-  Accepts PNG, JPEG, or WebP. The server resizes to ≤2048px, converts to WebP, and generates responsive variants.
 - **Base64 upload (fallback)**: When shell access is unavailable, call `add_project_media` (`mcp__plugin_stackportfolio_stackportfolio__add_project_media`) with `projectId`, `data` (base64 string), and `description`.
-- Note: The first image added becomes the cover screenshot. Reaching the plan image limit returns a 409 conflict.
-- **Media management**: Images can subsequently be reordered, captioned, or set as cover via `update_project_media`, replaced via `replace_project_media`, or removed via `remove_project_media`. Media can also be managed directly on the web at `https://stackportfol.io/projects/<projectId>`.
-- **Graceful degradation**: If media upload fails or is rejected, continue project setup cleanly and instruct the user to attach screenshots via the web dashboard at `https://stackportfol.io/projects/<projectId>`.
+- Note: Media can also be managed anytime on the web at `https://stackportfol.io/projects/<projectId>`.
 
-### Step 8: Summary
-Report the completed setup to the user with a direct link to their project on Stackportfolio (`https://stackportfol.io/projects/<projectId>` or via their profile).
+### Step 8: Offer Link File (`.stackportfolio.json`)
+Ask the user if they would like to create a local `.stackportfolio.json` link file:
+```json
+{
+  "projectId": "<projectId>"
+}
+```
+Explain that saving this file links the local repository directly to their Stackportfolio project, allowing future runs of `/stackportfolio:sync-project` (and CI actions) to synchronize changes instantly and exactly without name guessing. Only write `.stackportfolio.json` after the user agrees.
+
+### Step 9: Summary
+Report the completed setup to the user with a direct link to their project on Stackportfolio:
+`https://stackportfol.io/projects/<projectId>`
