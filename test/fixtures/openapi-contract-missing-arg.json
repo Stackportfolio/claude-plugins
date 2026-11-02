@@ -1,0 +1,5152 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Stackportfolio API",
+    "version": "1.0.0",
+    "description": "Read and write your Stackportfolio profile and projects. Every request but this document needs an API key. Requests are rate limited per account, across all of its keys: 3 per second, 30 per minute, 300 per hour, 1000 per day.",
+    "license": {
+      "name": "Proprietary",
+      "identifier": "LicenseRef-Proprietary"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://stackportfol.io/api/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Account",
+      "description": "The key owner and their tech profile."
+    },
+    {
+      "name": "Projects",
+      "description": "Projects, their technologies and contributors."
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    },
+    {
+      "apiKeyHeader": []
+    }
+  ],
+  "paths": {
+    "/openapi.json": {
+      "get": {
+        "operationId": "getOpenApiDocument",
+        "summary": "This document",
+        "tags": [
+          "Account"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "The OpenAPI 3.1 document.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docs/search": {
+      "get": {
+        "operationId": "searchDocumentation",
+        "summary": "Search developer documentation",
+        "description": "Search documentation sections, guides, REST API endpoints, schemas, and MCP tools.",
+        "tags": [
+          "Account"
+        ],
+        "x-required-scope": "profile:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "profile:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "profile:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "query",
+            "description": "Search query to look up in documentation.",
+            "schema": {
+              "type": "string"
+            },
+            "in": "query"
+          },
+          {
+            "name": "limit",
+            "description": "Maximum number of results to return.",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 50
+            },
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching documentation sections.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "search_documentation"
+      }
+    },
+    "/me": {
+      "get": {
+        "operationId": "getMe",
+        "summary": "The key owner and its scopes",
+        "tags": [
+          "Account"
+        ],
+        "x-required-scope": null,
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Who the key belongs to.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "whoami"
+      }
+    },
+    "/profile": {
+      "get": {
+        "operationId": "getProfile",
+        "summary": "The caller's tech profile",
+        "tags": [
+          "Account"
+        ],
+        "x-required-scope": "profile:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "profile:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "profile:read"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "get_profile"
+      },
+      "patch": {
+        "operationId": "updateProfile",
+        "summary": "Update the caller's tech profile",
+        "description": "A partial update merged onto the stored profile; `null` clears a field. A GET body can be sent back as is.",
+        "tags": [
+          "Account"
+        ],
+        "x-required-scope": "profile:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "profile:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "profile:write"
+            ]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "experienceLevel": {
+                    "type": "string",
+                    "enum": [
+                      "junior",
+                      "mid",
+                      "senior",
+                      "lead"
+                    ]
+                  },
+                  "githubUsername": {
+                    "type": "string",
+                    "maxLength": 39,
+                    "pattern": "^$|^[A-Za-z0-9][A-Za-z0-9-_.]*$"
+                  },
+                  "gitlabUsername": {
+                    "type": "string",
+                    "maxLength": 39,
+                    "pattern": "^$|^[A-Za-z0-9][A-Za-z0-9-_.]*$"
+                  },
+                  "bitbucketUsername": {
+                    "type": "string",
+                    "maxLength": 39,
+                    "pattern": "^$|^[A-Za-z0-9][A-Za-z0-9-_.]*$"
+                  },
+                  "seekingEmployment": {
+                    "type": "boolean"
+                  },
+                  "openToOpportunities": {
+                    "type": "boolean"
+                  },
+                  "preferredSalaryMin": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "preferredSalaryMax": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "salaryCurrency": {
+                    "type": "string",
+                    "enum": [
+                      "USD",
+                      "EUR",
+                      "GBP",
+                      "CAD"
+                    ]
+                  },
+                  "availableDate": {
+                    "type": "string",
+                    "description": "`yyyy-mm-dd`, or a full ISO date-time."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "update_profile"
+      }
+    },
+    "/projects": {
+      "get": {
+        "operationId": "listProjects",
+        "summary": "List projects",
+        "description": "`mine` is every project the caller is on, private ones and open invitations included; `visible` is every project they may read.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scope",
+            "description": "Which projects to list.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mine",
+                "visible"
+              ],
+              "default": "mine"
+            },
+            "in": "query"
+          },
+          {
+            "name": "limit",
+            "description": "Page size, clamped to 1–100.",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            },
+            "in": "query"
+          },
+          {
+            "name": "offset",
+            "description": "Rows to skip.",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            },
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of projects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "pagination"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ProjectSummary"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "list_projects"
+      },
+      "post": {
+        "operationId": "createProject",
+        "summary": "Create a project",
+        "description": "The caller becomes its OWNER. Visibility defaults to `private`. Listed technologies are credited to the caller. Past the active-project limit the project is still created, with `deactivatedAt` set. Project creation has its own hourly and daily limit (429).",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "description": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 5000
+                  },
+                  "repositoryUrl": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 500,
+                    "pattern": "^$|^https?:\\/\\/[^\\s/]+\\.[^\\s/]+(\\/\\S*)?$"
+                  },
+                  "deployedUrl": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 500,
+                    "pattern": "^$|^https?:\\/\\/[^\\s/]+\\.[^\\s/]+(\\/\\S*)?$"
+                  },
+                  "organisation": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "technologies": {
+                    "description": "Credited to the caller. At most 50.",
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "version": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "maxLength": 20,
+                                      "pattern": "^\\d+(\\.\\d+)?$"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "The major or major.minor version the project used, like \"5\" or \"3.12\"; null when unknown."
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "type": "string",
+                        "description": "Comma-separated."
+                      }
+                    ]
+                  },
+                  "contributors": {
+                    "description": "Usernames or emails of existing users, invited unaccepted.",
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "version": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "maxLength": 20,
+                                      "pattern": "^\\d+(\\.\\d+)?$"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "The major or major.minor version the project used, like \"5\" or \"3.12\"; null when unknown."
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "type": "string",
+                        "description": "Comma-separated."
+                      }
+                    ]
+                  },
+                  "visibility": {
+                    "default": "private",
+                    "type": "string",
+                    "enum": [
+                      "public",
+                      "unlisted",
+                      "private"
+                    ]
+                  },
+                  "saveAsDraft": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "parentId": {
+                    "description": "Create this project as a part of another.",
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "The URL of the new project.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "create_project"
+      }
+    },
+    "/projects/{id}": {
+      "get": {
+        "operationId": "getProject",
+        "summary": "Get a project",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "get_project"
+      },
+      "patch": {
+        "operationId": "updateProject",
+        "summary": "Update a project",
+        "description": "A partial update; `null` clears a field. Only an accepted OWNER or MAINTAINER may write; anyone else gets the same 404 as for a missing project.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 5000
+                  },
+                  "repositoryUrl": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "pattern": "^$|^https?:\\/\\/[^\\s/]+\\.[^\\s/]+(\\/\\S*)?$"
+                  },
+                  "deployedUrl": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "pattern": "^$|^https?:\\/\\/[^\\s/]+\\.[^\\s/]+(\\/\\S*)?$"
+                  },
+                  "organisation": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ]
+                      }
+                    ]
+                  },
+                  "technologies": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "version": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "maxLength": 20,
+                                      "pattern": "^\\d+(\\.\\d+)?$"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "The major or major.minor version the project used, like \"5\" or \"3.12\"; null when unknown."
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "type": "string",
+                        "description": "Comma-separated."
+                      }
+                    ],
+                    "description": "The complete new list, at most 50. Omit it to keep the current technologies."
+                  },
+                  "formerRows": {
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 100
+                    }
+                  },
+                  "former": {
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 100
+                    }
+                  },
+                  "replacedBy": {
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 100
+                    }
+                  },
+                  "visibility": {
+                    "type": "string",
+                    "enum": [
+                      "public",
+                      "unlisted",
+                      "private"
+                    ]
+                  },
+                  "isArchived": {
+                    "type": "boolean"
+                  },
+                  "isActive": {
+                    "type": "boolean",
+                    "description": "The inverse of `isArchived`; either may be sent."
+                  },
+                  "deactivated": {
+                    "type": "boolean",
+                    "description": "Owner only. `false` activates the project, which is a 409 when the owner is already at their active-project limit."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "update_project"
+      },
+      "delete": {
+        "operationId": "deleteProject",
+        "summary": "Delete a project",
+        "description": "Irreversible. Its technologies, contributors, media and evidence go with it and every credited contributor is rescored; its parts are kept and become root projects. Needs the separate `projects:delete` scope, which `projects:write` does not imply. Only the accepted OWNER may delete; anyone else gets the same 404 as for a missing project.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:delete",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:delete"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:delete"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted.",
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        }
+      }
+    },
+    "/projects/{id}/technologies": {
+      "get": {
+        "operationId": "listProjectTechnologies",
+        "summary": "List a project's technologies",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "description": "Page size, clamped to 1–100.",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            },
+            "in": "query"
+          },
+          {
+            "name": "offset",
+            "description": "Rows to skip.",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            },
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of technologies.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "pagination"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ProjectTechnology"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "list_project_technologies"
+      },
+      "post": {
+        "operationId": "addProjectTechnology",
+        "summary": "Add a technology",
+        "description": "Credits every accepted contributor with it. A project lists at most 50 technologies; one more is a 409. Only an accepted OWNER or MAINTAINER may write; anyone else gets the same 404 as for a missing project.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "version": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 20,
+                        "pattern": "^\\d+(\\.\\d+)?$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The major or major.minor version the project used, like \"5\" or \"3.12\"; null when unknown."
+                  },
+                  "former": {
+                    "type": "boolean",
+                    "description": "Whether the project moved off this technology."
+                  },
+                  "replacedBy": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The id of the technology that replaced it, which the project must list and which must not be this one. Needs former: true; null clears it, as does former: false."
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The attached technology.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectTechnology"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "add_project_technology"
+      }
+    },
+    "/projects/{id}/media": {
+      "get": {
+        "operationId": "listProjectMedia",
+        "summary": "List a project's media",
+        "description": "Lists all media items for a project in gallery order.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "description": "Page size, clamped to 1–100.",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            },
+            "in": "query"
+          },
+          {
+            "name": "offset",
+            "description": "Rows to skip.",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            },
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of media items.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "pagination"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ProjectMedia"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "list_project_media"
+      },
+      "post": {
+        "operationId": "addProjectMedia",
+        "summary": "Add an image to a project",
+        "description": "Optimises the image server-side and appends it to the project's gallery; the first image becomes the cover. Takes a JSON body with base64 `data`, or multipart/form-data with a `file` part and an optional `description`. The decoded image may be at most 5 MB. A project holds a limited number of images set by its owner's plan; one more is a 409. Only an accepted OWNER or MAINTAINER may write; anyone else gets the same 404 as for a missing project.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The image, base64-encoded (a data: URL is accepted). PNG, JPEG, WebP or a still GIF; at most 6 MB of base64 in a JSON body. It is resized to at most 2048px, converted to WebP and stripped of metadata. The REST endpoint also takes multipart/form-data with the file in a `file` field."
+                  },
+                  "description": {
+                    "description": "Caption and alt text for the image.",
+                    "type": "string",
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "data"
+                ]
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "contentEncoding": "binary",
+                    "description": "The image file; at most 5 MB."
+                  },
+                  "description": {
+                    "description": "Caption and alt text for the image.",
+                    "type": "string",
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The stored image.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectMedia"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "add_project_media"
+      }
+    },
+    "/projects/{id}/media/uploads": {
+      "post": {
+        "operationId": "createProjectMediaUpload",
+        "summary": "Create a single-use upload URL for a project image",
+        "description": "Generates a short-lived (10 min), single-use HMAC-signed PUT URL to upload a project image directly without base64 encoding. Accepts PNG, JPEG, or WebP up to 5 MB. Only an accepted OWNER or MAINTAINER may write; anyone else gets the same 404 as for a missing project.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filename": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Original filename for the image, including extension."
+                  },
+                  "contentType": {
+                    "type": "string",
+                    "enum": [
+                      "image/png",
+                      "image/jpeg",
+                      "image/webp"
+                    ],
+                    "description": "The MIME type of the image to upload (image/png, image/jpeg, or image/webp)."
+                  },
+                  "description": {
+                    "description": "Caption and alt text for the image.",
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "altText": {
+                    "description": "Alt text for the image (defaults to description if omitted).",
+                    "type": "string",
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "filename",
+                  "contentType"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The signed upload URL and required headers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectMediaUpload"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "create_project_media_upload"
+      }
+    },
+    "/uploads/{token}": {
+      "put": {
+        "operationId": "putSignedUpload",
+        "summary": "Upload an image to a signed URL",
+        "description": "Authorised by the signed URL alone, no key. The body is the raw PNG, JPEG or WebP bytes (not multipart) with the Content-Type from createProjectMediaUpload, at most 5 MB. The URL works once and expires after 10 minutes; a used URL is a 409, an expired one a 410, an oversized body a 413. Responds with the stored image.",
+        "tags": [
+          "Account"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "description": "The signed token from the upload URL.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The stored image.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectMedia"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}/media/{mediaId}": {
+      "patch": {
+        "operationId": "updateProjectMedia",
+        "summary": "Update a project's media item",
+        "description": "Updates metadata (caption, alt text), position/sort order, or cover status for a media item. Only an accepted OWNER or MAINTAINER may write; anyone else gets the same 404 as for a missing project.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "description": "Media item id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "caption": {
+                    "description": "Caption for the image; null clears it.",
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "altText": {
+                    "description": "Alt text for the image; null clears it.",
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "position": {
+                    "description": "New 0-indexed position in the gallery.",
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "sortOrder": {
+                    "description": "Alias for position.",
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated media item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectMedia"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "update_project_media"
+      },
+      "put": {
+        "operationId": "replaceProjectMedia",
+        "summary": "Replace a project's media image",
+        "description": "Replaces the image file with a new upload (base64 data or multipart file). Optimises to WebP with responsive variants and deletes the old stored objects. Only an accepted OWNER or MAINTAINER may write; anyone else gets the same 404 as for a missing project.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "description": "Media item id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The replacement image, base64-encoded. At most 6 MB of base64; data: URL accepted."
+                  },
+                  "description": {
+                    "description": "Optional caption and alt text for the replacement image.",
+                    "type": "string",
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "data"
+                ]
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "contentEncoding": "binary",
+                    "description": "The replacement image file; at most 5 MB."
+                  },
+                  "description": {
+                    "description": "Optional caption and alt text for the replacement image.",
+                    "type": "string",
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated media item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectMedia"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "replace_project_media"
+      },
+      "delete": {
+        "operationId": "removeProjectMedia",
+        "summary": "Remove a project's media item",
+        "description": "Deletes the media item and its stored files (including variants), repairing cover and position ordering. Only an accepted OWNER or MAINTAINER may write; anyone else gets the same 404 as for a missing project.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "description": "Media item id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The media item was removed.",
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "remove_project_media"
+      }
+    },
+    "/projects/{id}/technologies/{technologyId}": {
+      "patch": {
+        "operationId": "setProjectTechnologyVersion",
+        "summary": "Update a technology on a project",
+        "description": "Marks a technology former (moved off), optionally naming the technology that replaced it. Send only the keys to change. A former technology still counts for proficiency, so nobody is rescored. A technology the project does not list and a project the caller may not edit are the same 404. Only an accepted OWNER or MAINTAINER may write; anyone else gets the same 404 as for a missing project.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "technologyId",
+            "in": "path",
+            "required": true,
+            "description": "Technology id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 20,
+                            "pattern": "^\\d+(\\.\\d+)?$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "The major or major.minor version the project used, like \"5\" or \"3.12\"; null when unknown."
+                      },
+                      {
+                        "type": "string",
+                        "const": ""
+                      }
+                    ],
+                    "description": "The version to set; null or \"\" clears it."
+                  },
+                  "former": {
+                    "type": "boolean",
+                    "description": "Whether the project moved off this technology."
+                  },
+                  "replacedBy": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The id of the technology that replaced it, which the project must list and which must not be this one. Needs former: true; null clears it, as does former: false."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The technology.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectTechnology"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "update_project_technology"
+      },
+      "delete": {
+        "operationId": "removeProjectTechnology",
+        "summary": "Remove a technology",
+        "description": "Deletes the evidence it gave on this project and rescores its contributors. Only an accepted OWNER or MAINTAINER may write; anyone else gets the same 404 as for a missing project.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "technologyId",
+            "in": "path",
+            "required": true,
+            "description": "Technology id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed.",
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "remove_project_technology"
+      }
+    },
+    "/projects/{id}/contributors": {
+      "get": {
+        "operationId": "listProjectContributors",
+        "summary": "List a project's contributors",
+        "description": "Open invitations included. No email addresses.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "description": "Page size, clamped to 1–100.",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            },
+            "in": "query"
+          },
+          {
+            "name": "offset",
+            "description": "Rows to skip.",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            },
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of contributors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "pagination"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Contributor"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "list_project_contributors"
+      },
+      "post": {
+        "operationId": "inviteProjectContributor",
+        "summary": "Invite a contributor",
+        "description": "Invites an existing user by username or email; they are notified and must accept. Only an accepted OWNER or MAINTAINER may write; anyone else gets the same 404 as for a missing project.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "identifier": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 254
+                  },
+                  "role": {
+                    "default": "CONTRIBUTOR",
+                    "type": "string",
+                    "enum": [
+                      "MAINTAINER",
+                      "CONTRIBUTOR"
+                    ]
+                  }
+                },
+                "required": [
+                  "identifier"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The invitation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contributor"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "invite_project_contributor"
+      }
+    },
+    "/projects/{id}/contributors/{userId}": {
+      "patch": {
+        "operationId": "setProjectContributorRole",
+        "summary": "Change a contributor's role",
+        "description": "The owner's role cannot be changed (409). Only an accepted OWNER or MAINTAINER may write; anyone else gets the same 404 as for a missing project.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "The contributor's user id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "MAINTAINER",
+                      "CONTRIBUTOR"
+                    ]
+                  }
+                },
+                "required": [
+                  "role"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The contributor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contributor"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "set_contributor_role"
+      },
+      "delete": {
+        "operationId": "removeProjectContributor",
+        "summary": "Remove a contributor",
+        "description": "Also cancels an open invitation, deletes their evidence on this project and rescores them. Only an accepted OWNER or MAINTAINER may write; anyone else gets the same 404 as for a missing project.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "The contributor's user id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed.",
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "remove_project_contributor"
+      }
+    },
+    "/projects/{id}/contributors/{userId}/technologies": {
+      "put": {
+        "operationId": "setProjectContributorTechnologies",
+        "summary": "Set which technologies a contributor used",
+        "description": "Replaces one accepted contributor's technology credits on this project and rescores them; proficiency stays computed. The caller may set their own, and an accepted OWNER or MAINTAINER anyone's but the owner's. A pending invitee, a target the caller may not change, and a project the caller is not on are the same 404.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "The contributor's user id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "technologyIds": {
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "description": "The whole set, replacing the current one. Each must be one of the project's technologies."
+                  }
+                },
+                "required": [
+                  "technologyIds"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The contributor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contributor"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "set_contributor_technologies"
+      }
+    },
+    "/projects/{id}/contributors/{userId}/skills": {
+      "put": {
+        "operationId": "setProjectContributorSkills",
+        "summary": "Set the skills a contributor used",
+        "description": "Replaces the caller's own skills on this project and recomputes their skill levels. `userId` must be the caller: nobody records skills for someone else, and any other id is a 404.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "The contributor's user id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "skills": {
+                    "maxItems": 10,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 50
+                    },
+                    "description": "The whole list, replacing the current one. At most 10, each at most 50 characters; repeats are dropped case-insensitively."
+                  }
+                },
+                "required": [
+                  "skills"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The contributor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contributor"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "set_contributor_skills"
+      }
+    },
+    "/stories": {
+      "get": {
+        "operationId": "listContributionStories",
+        "summary": "List contribution stories",
+        "description": "Every \"How I worked on this\" account on the projects the caller may see, newest project activity first. `mine` keeps only the caller’s own stories.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scope",
+            "description": "Which stories to list.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "mine"
+              ],
+              "default": "all"
+            },
+            "in": "query"
+          },
+          {
+            "name": "limit",
+            "description": "Page size, clamped to 1–100.",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            },
+            "in": "query"
+          },
+          {
+            "name": "offset",
+            "description": "Rows to skip.",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            },
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of stories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "pagination"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Story"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "list_contribution_stories"
+      }
+    },
+    "/projects/{id}/stories": {
+      "get": {
+        "operationId": "listProjectContributionStories",
+        "summary": "List a project's contribution stories",
+        "description": "Every \"How I worked on this\" account written on the project, as its page renders them. `mine` keeps only the caller’s own.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scope",
+            "description": "Which stories to list.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "mine"
+              ],
+              "default": "all"
+            },
+            "in": "query"
+          },
+          {
+            "name": "limit",
+            "description": "Page size, clamped to 1–100.",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            },
+            "in": "query"
+          },
+          {
+            "name": "offset",
+            "description": "Rows to skip.",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            },
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of stories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "pagination"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Story"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "list_project_contribution_stories"
+      }
+    },
+    "/projects/{id}/stories/{userId}": {
+      "get": {
+        "operationId": "getContributionStory",
+        "summary": "Get one contributor's story",
+        "description": "One contributor's story on a project the caller may see. Any author's story is readable, as the project page renders it; pass the caller's own id from `/me` to read theirs.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "The contributor's user id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The story.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Story"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "get_contribution_story"
+      }
+    },
+    "/projects/{id}/story": {
+      "put": {
+        "operationId": "saveContributionStory",
+        "summary": "Write the caller's story",
+        "description": "Writes the caller’s own \"How I worked on this\" account, replacing any previous one. Every accepted contributor may write theirs, and nobody — owner included — may write anybody else’s: a project the caller is not on and a missing one are the same 404. Declaring a practice makes `corrections` mandatory, which is the anti-AI-washing rule the web editor enforces.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "problem": {
+                    "type": "string",
+                    "minLength": 40,
+                    "maxLength": 600
+                  },
+                  "approach": {
+                    "type": "string",
+                    "minLength": 40,
+                    "maxLength": 800
+                  },
+                  "corrections": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 800
+                  },
+                  "hindsight": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 400
+                  },
+                  "practices": {
+                    "default": [],
+                    "maxItems": 6,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "tool": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "EXPLORED_OPTIONS",
+                            "WROTE_FIRST_DRAFT",
+                            "REVIEWED_MY_WORK",
+                            "DID_REPETITIVE_PART",
+                            "BUILT_END_TO_END",
+                            "SOMETHING_ELSE"
+                          ]
+                        },
+                        "askedFor": {
+                          "type": "string",
+                          "minLength": 10,
+                          "maxLength": 140
+                        }
+                      },
+                      "required": [
+                        "tool",
+                        "role",
+                        "askedFor"
+                      ]
+                    }
+                  },
+                  "links": {
+                    "default": [],
+                    "maxItems": 5,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "label": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "url": {
+                          "type": "string",
+                          "maxLength": 500,
+                          "pattern": "^https?:\\/\\/[^\\s/]+\\.[^\\s/]+(\\/\\S*)?$"
+                        }
+                      },
+                      "required": [
+                        "label",
+                        "url"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "problem",
+                  "approach"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The saved story.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Story"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "save_contribution_story"
+      },
+      "delete": {
+        "operationId": "deleteContributionStory",
+        "summary": "Delete the caller's story",
+        "description": "Deletes the caller’s own story on the project. The contribution itself is untouched: only the write-up goes. Only ever the caller’s own story, so `projects:write` is enough.",
+        "tags": [
+          "Projects"
+        ],
+        "x-required-scope": "projects:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted.",
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        },
+        "x-mcp-tool": "delete_contribution_story"
+      }
+    },
+    "/technologies": {
+      "get": {
+        "operationId": "searchTechnologies",
+        "x-mcp-tool": "search_technologies",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "name": "names",
+            "in": "query"
+          },
+          {
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "name": "offset",
+            "in": "query"
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "An API key (`spk_…`) as `Authorization: Bearer spk_…`."
+      },
+      "apiKeyHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "The same key in the `x-api-key` header."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "unauthorized",
+                  "insufficient_scope",
+                  "not_found",
+                  "validation_failed",
+                  "conflict",
+                  "rate_limited",
+                  "internal"
+                ]
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "description": "For `validation_failed`, a list of `{ path, message }`; for `insufficient_scope`, `{ required }`."
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "total": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "limit",
+          "offset",
+          "total"
+        ]
+      },
+      "Me": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "profile:read",
+                "profile:write",
+                "projects:read",
+                "projects:write",
+                "projects:delete"
+              ]
+            }
+          },
+          "via": {
+            "type": "string",
+            "enum": [
+              "api_key",
+              "oauth"
+            ]
+          }
+        },
+        "required": [
+          "userId",
+          "username",
+          "scopes",
+          "via"
+        ]
+      },
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "experienceLevel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "githubUsername": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "gitlabUsername": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bitbucketUsername": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "seekingEmployment": {
+            "type": "boolean"
+          },
+          "openToOpportunities": {
+            "type": "boolean"
+          },
+          "preferredSalaryMin": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "preferredSalaryMax": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "salaryCurrency": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "USD",
+                  "EUR",
+                  "GBP",
+                  "CAD"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "availableDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "areas": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "slug": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "group": {
+                  "type": "string",
+                  "enum": [
+                    "languages",
+                    "frontend",
+                    "backend",
+                    "data",
+                    "infrastructure",
+                    "developer-tooling",
+                    "quality",
+                    "mobile",
+                    "ai",
+                    "other"
+                  ],
+                  "description": "The display group the category rolls up into."
+                },
+                "projectCount": {
+                  "type": "number"
+                },
+                "level": {
+                  "type": "number",
+                  "description": "The highest level (1–10) among its technologies; 0 if none."
+                },
+                "technologies": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "slug",
+                "name",
+                "group",
+                "projectCount",
+                "level",
+                "technologies"
+              ]
+            },
+            "description": "The categories your project credits fall into (one per technology), most projects first. Computed, read-only."
+          },
+          "indicator": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "specialist",
+                          "generalist"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "specialist when one group holds at least 60% of credits; generalist at 4+ groups with 2+ projects each and under 40%; null otherwise, or with fewer than 3 projects."
+                  },
+                  "breadth": {
+                    "type": "number",
+                    "description": "Groups with evidence on at least 2 projects."
+                  },
+                  "depth": {
+                    "type": "number",
+                    "description": "The top group's share of all group credits, in whole percent."
+                  },
+                  "topArea": {
+                    "type": "object",
+                    "properties": {
+                      "slug": {
+                        "type": "string",
+                        "enum": [
+                          "languages",
+                          "frontend",
+                          "backend",
+                          "data",
+                          "infrastructure",
+                          "developer-tooling",
+                          "quality",
+                          "mobile",
+                          "ai",
+                          "other"
+                        ]
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "slug",
+                      "name"
+                    ],
+                    "description": "The top group."
+                  },
+                  "projectCount": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "label",
+                  "breadth",
+                  "depth",
+                  "topArea",
+                  "projectCount"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null with no areas, or when you have hidden it in settings. Computed, read-only."
+          }
+        },
+        "required": [
+          "userId",
+          "title",
+          "experienceLevel",
+          "githubUsername",
+          "gitlabUsername",
+          "bitbucketUsername",
+          "seekingEmployment",
+          "openToOpportunities",
+          "preferredSalaryMin",
+          "preferredSalaryMax",
+          "salaryCurrency",
+          "availableDate",
+          "createdAt",
+          "updatedAt",
+          "areas",
+          "indicator"
+        ]
+      },
+      "ProjectSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "repositoryUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "github",
+                  "gitlab",
+                  "bitbucket"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Card images, cover first."
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "starCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "lastActivityDate": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "OWNER",
+                  "MAINTAINER",
+                  "CONTRIBUTOR"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The caller's role on the project, if any."
+          },
+          "accepted": {
+            "description": "Whether the caller has accepted their invitation.",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "pinnedPosition": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where the caller pinned the project on their profile (1 is first), or null. Only `scope=mine` sets it, and that list is already ordered pins first."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "repositoryUrl",
+          "provider",
+          "image",
+          "images",
+          "isActive",
+          "isPublic",
+          "starCount",
+          "lastActivityDate",
+          "createdAt",
+          "role",
+          "accepted",
+          "pinnedPosition"
+        ]
+      },
+      "Project": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "repositoryUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deployedUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "deactivatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set while the project is outside its owner's active-project limit. An inactive project is private to everyone but its contributors."
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "unlisted",
+              "private"
+            ]
+          },
+          "effectiveVisibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "unlisted",
+              "private"
+            ],
+            "description": "The visibility once every ancestor is taken into account."
+          },
+          "starCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "commitCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "viewCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "lastActivityDate": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "viewerRole": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "OWNER",
+                  "MAINTAINER",
+                  "CONTRIBUTOR"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The caller's accepted role, if any."
+          },
+          "organisation": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "isApproved": {
+                    "type": "boolean"
+                  },
+                  "isVerified": {
+                    "type": "boolean"
+                  },
+                  "logoUrl": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "slug",
+                  "isApproved",
+                  "isVerified",
+                  "logoUrl"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "This project's organisation, or its nearest ancestor's."
+          },
+          "ancestors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ]
+            },
+            "description": "The parent chain, root first, names only."
+          },
+          "technologies": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "version": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 20,
+                      "pattern": "^\\d+(\\.\\d+)?$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The major or major.minor version the project used, like \"5\" or \"3.12\"; null when unknown."
+                },
+                "isApproved": {
+                  "type": "boolean",
+                  "description": "False while awaiting admin approval; visible to project members."
+                },
+                "former": {
+                  "type": "boolean",
+                  "description": "The project moved off it. It still counts as evidence for proficiency."
+                },
+                "replacedBy": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "What replaced it: another technology on this project. Only set when former."
+                },
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "slug": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "slug",
+                      "name"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "version",
+                "isApproved",
+                "former",
+                "replacedBy",
+                "categories"
+              ]
+            }
+          },
+          "media": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "image",
+                    "video_embed"
+                  ]
+                },
+                "url": {
+                  "type": "string"
+                },
+                "posterUrl": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "embedProvider": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "youtube",
+                        "vimeo",
+                        "loom"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "embedId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "caption": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "altText": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "position": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Order in the gallery, 0-indexed."
+                },
+                "isCover": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "kind",
+                "url",
+                "posterUrl",
+                "embedProvider",
+                "embedId",
+                "caption",
+                "altText",
+                "position",
+                "isCover"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "repositoryUrl",
+          "deployedUrl",
+          "provider",
+          "image",
+          "isActive",
+          "isPublic",
+          "deactivatedAt",
+          "visibility",
+          "effectiveVisibility",
+          "starCount",
+          "commitCount",
+          "viewCount",
+          "lastActivityDate",
+          "createdAt",
+          "viewerRole",
+          "organisation",
+          "ancestors",
+          "technologies",
+          "media"
+        ]
+      },
+      "Technology": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "ProjectTechnology": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20,
+                "pattern": "^\\d+(\\.\\d+)?$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The major or major.minor version the project used, like \"5\" or \"3.12\"; null when unknown."
+          },
+          "isApproved": {
+            "type": "boolean",
+            "description": "False while awaiting admin approval; visible to project members."
+          },
+          "former": {
+            "type": "boolean",
+            "description": "The project moved off it. It still counts as evidence for proficiency."
+          },
+          "replacedBy": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What replaced it: another technology on this project. Only set when former."
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "slug": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "slug",
+                "name"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "version",
+          "isApproved",
+          "former",
+          "replacedBy",
+          "categories"
+        ]
+      },
+      "ProjectMedia": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video_embed"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "posterUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "embedProvider": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "youtube",
+                  "vimeo",
+                  "loom"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "embedId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "caption": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "altText": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "position": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Order in the gallery, 0-indexed."
+          },
+          "isCover": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "url",
+          "posterUrl",
+          "embedProvider",
+          "embedId",
+          "caption",
+          "altText",
+          "position",
+          "isCover"
+        ]
+      },
+      "ProjectMediaUpload": {
+        "type": "object",
+        "properties": {
+          "uploadUrl": {
+            "type": "string",
+            "description": "The single-use PUT URL to upload the raw image to."
+          },
+          "method": {
+            "type": "string",
+            "const": "PUT",
+            "description": "The HTTP method to use for the upload."
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "When the upload URL expires (ISO 8601)."
+          },
+          "maxBytes": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Maximum allowed size of the upload in bytes."
+          },
+          "headers": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Required request headers to include on the upload."
+          }
+        },
+        "required": [
+          "uploadUrl",
+          "method",
+          "expiresAt",
+          "maxBytes",
+          "headers"
+        ]
+      },
+      "Contributor": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "OWNER",
+              "MAINTAINER",
+              "CONTRIBUTOR"
+            ]
+          },
+          "accepted": {
+            "type": "boolean"
+          },
+          "invitedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "technologies": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ]
+            },
+            "description": "Which of the project's technologies this person used here. Empty while pending."
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ]
+            },
+            "description": "The skills this person recorded for their work here. Empty while pending."
+          }
+        },
+        "required": [
+          "userId",
+          "name",
+          "username",
+          "image",
+          "role",
+          "accepted",
+          "invitedAt",
+          "technologies",
+          "skills"
+        ]
+      },
+      "Story": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "author": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "username": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "image": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "username",
+              "image"
+            ]
+          },
+          "problem": {
+            "type": "string"
+          },
+          "approach": {
+            "type": "string"
+          },
+          "corrections": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hindsight": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "practices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "technologyId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "tool": {
+                  "type": "string"
+                },
+                "toolApproved": {
+                  "type": "boolean",
+                  "description": "Whether the catalogue has approved the named tool."
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "EXPLORED_OPTIONS",
+                    "WROTE_FIRST_DRAFT",
+                    "REVIEWED_MY_WORK",
+                    "DID_REPETITIVE_PART",
+                    "BUILT_END_TO_END",
+                    "SOMETHING_ELSE"
+                  ]
+                },
+                "askedFor": {
+                  "type": "string",
+                  "description": "What the writer asked the tool to do."
+                }
+              },
+              "required": [
+                "technologyId",
+                "tool",
+                "toolApproved",
+                "role",
+                "askedFor"
+              ]
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "url"
+              ]
+            }
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "projectId",
+          "id",
+          "userId",
+          "author",
+          "problem",
+          "approach",
+          "corrections",
+          "hindsight",
+          "practices",
+          "links",
+          "updatedAt"
+        ]
+      }
+    },
+    "responses": {
+      "ValidationFailed": {
+        "description": "The request is not valid (`validation_failed`).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "The key is missing, malformed, unknown, expired or disabled.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InsufficientScope": {
+        "description": "The key lacks the scope this operation needs.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "No such resource, or not one the caller may see.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "The change conflicts with the current state.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "description": "The request body or the file in it is over the size limit.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "The caller has used up one of its rate-limit windows. See `Retry-After`.",
+        "headers": {
+          "Retry-After": {
+            "description": "Seconds to wait before retrying.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "RateLimit-Limit": {
+            "description": "The request allowance of the window closest to running out.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "RateLimit-Remaining": {
+            "description": "Requests left in that window.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "RateLimit-Reset": {
+            "description": "Seconds until that window resets.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Internal": {
+        "description": "Something went wrong on our side.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}

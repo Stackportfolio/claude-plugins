@@ -5,8 +5,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node scripts/validate.mjs && node --test test/*.test.mjs",
-    "validate": "node scripts/validate.mjs"
+    "test": "node scripts/validate.mjs && node scripts/contract.mjs && node --test test/*.test.mjs",
+    "validate": "node scripts/validate.mjs",
+    "contract": "node scripts/contract.mjs"
   },
   "license": "MIT"
 }

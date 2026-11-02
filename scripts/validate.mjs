@@ -9,40 +9,6 @@ const PLUGIN_PATH = join(REPO_ROOT, 'plugins/stackportfolio/.claude-plugin/plugi
 const MCP_CONFIG_PATH = join(REPO_ROOT, 'plugins/stackportfolio/.mcp.json');
 const SKILLS_DIR = join(REPO_ROOT, 'plugins/stackportfolio/skills');
 
-// Known MCP tool names mirrored from stackportfolio src/lib/server/mcp/tools.ts (30 tools)
-export const MCP_TOOLS_SNAPSHOT = new Set([
-	'whoami',
-	'search_documentation',
-	'search_technologies',
-	'get_profile',
-	'update_profile',
-	'list_projects',
-	'get_project',
-	'create_project',
-	'update_project',
-	'list_project_technologies',
-	'add_project_technology',
-	'list_project_media',
-	'create_project_media_upload',
-	'add_project_media',
-	'update_project_media',
-	'replace_project_media',
-	'remove_project_media',
-	'update_project_technology',
-	'remove_project_technology',
-	'list_project_contributors',
-	'invite_project_contributor',
-	'set_contributor_role',
-	'remove_project_contributor',
-	'set_contributor_technologies',
-	'set_contributor_skills',
-	'list_contribution_stories',
-	'list_project_contribution_stories',
-	'get_contribution_story',
-	'save_contribution_story',
-	'delete_contribution_story'
-]);
-
 const EXPECTED_V1_SKILLS = [
 	'add-project',
 	'upload-screenshots',
@@ -101,65 +67,6 @@ function parseFrontmatter(content, filePath) {
 		frontmatter: data,
 		body: content.slice(match[0].length)
 	};
-}
-
-function findAppToolsPath() {
-	const candidates = [
-		process.env.STACKPORTFOLIO_APP_DIR && join(process.env.STACKPORTFOLIO_APP_DIR, 'src/lib/server/mcp/tools.ts'),
-		process.env.APP_REPO_PATH && join(process.env.APP_REPO_PATH, 'src/lib/server/mcp/tools.ts'),
-		resolve(REPO_ROOT, '../stackportfolio-fullstack/src/lib/server/mcp/tools.ts'),
-		resolve(REPO_ROOT, '../../stackportfolio-fullstack/src/lib/server/mcp/tools.ts'),
-		resolve(REPO_ROOT, '../stackportfolio/src/lib/server/mcp/tools.ts')
-	].filter(Boolean);
-
-	for (const candidate of candidates) {
-		if (existsSync(candidate)) {
-			return candidate;
-		}
-	}
-	return null;
-}
-
-function loadAppTools(toolsPath) {
-	try {
-		const content = readFileSync(toolsPath, 'utf8');
-		const match = content.match(/export const MCP_TOOLS: McpTool\[\] = \[([\s\S]*?)\];/);
-		if (!match) {
-			error(`Could not locate 'export const MCP_TOOLS' array in ${toolsPath}`);
-			return null;
-		}
-		const toolNames = [...match[1].matchAll(/name:\s*['"]([a-zA-Z0-9_]+)['"]/g)].map((m) => m[1]);
-		return new Set(toolNames);
-	} catch (e) {
-		error(`Failed reading app tools from ${toolsPath}: ${e.message}`);
-		return null;
-	}
-}
-
-console.log('--- Validating App MCP Tools Integration ---');
-let knownTools = MCP_TOOLS_SNAPSHOT;
-const appToolsPath = findAppToolsPath();
-
-if (appToolsPath) {
-	const liveTools = loadAppTools(appToolsPath);
-	if (liveTools && liveTools.size > 0) {
-		const missingInSnapshot = [...liveTools].filter((t) => !MCP_TOOLS_SNAPSHOT.has(t));
-		const extraInSnapshot = [...MCP_TOOLS_SNAPSHOT].filter((t) => !liveTools.has(t));
-
-		if (missingInSnapshot.length > 0) {
-			error(`MCP_TOOLS_SNAPSHOT missing tools present in app repo: ${missingInSnapshot.join(', ')}`);
-		}
-		if (extraInSnapshot.length > 0) {
-			error(`MCP_TOOLS_SNAPSHOT contains extra tools not in app repo: ${extraInSnapshot.join(', ')}`);
-		}
-
-		if (missingInSnapshot.length === 0 && extraInSnapshot.length === 0) {
-			pass(`Loaded ${liveTools.size} MCP tools from app repo (${appToolsPath}) and verified MCP_TOOLS_SNAPSHOT is in sync`);
-		}
-		knownTools = liveTools;
-	}
-} else {
-	pass(`App repo tools.ts not found; validating against MCP_TOOLS_SNAPSHOT (${knownTools.size} tools)`);
 }
 
 console.log('\n--- Validating Marketplace Manifest ---');
@@ -311,10 +218,6 @@ if (!existsSync(SKILLS_DIR)) {
 						`${skillPath}: allowed-tools entry '${tool}' does not match plugin MCP naming rule '${EXPECTED_TOOL_PREFIX}<tool>' or Bash pattern`
 					);
 					continue;
-				}
-				const bareName = tool.slice(EXPECTED_TOOL_PREFIX.length);
-				if (!knownTools.has(bareName)) {
-					error(`${skillPath}: allowed-tools references unknown tool '${bareName}' (full: '${tool}')`);
 				}
 			}
 		}
