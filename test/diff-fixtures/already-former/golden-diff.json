@@ -1,0 +1,17 @@
+{
+  "add": [],
+  "remove": [],
+  "version": [],
+  "former": [],
+  "unchanged": [
+    {
+      "id": "40000000-0000-0000-0000-000000000001",
+      "name": "React",
+      "version": null
+    }
+  ],
+  "proposedTechnologies": [
+    "jQuery",
+    "React"
+  ]
+}

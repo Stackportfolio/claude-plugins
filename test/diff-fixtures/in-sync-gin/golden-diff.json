@@ -1,0 +1,28 @@
+{
+  "add": [],
+  "remove": [],
+  "version": [],
+  "former": [],
+  "unchanged": [
+    {
+      "id": "30000000-0000-0000-0000-000000000001",
+      "name": "Gin",
+      "version": null
+    },
+    {
+      "id": "30000000-0000-0000-0000-000000000002",
+      "name": "Go",
+      "version": null
+    },
+    {
+      "id": "30000000-0000-0000-0000-000000000003",
+      "name": "PostgreSQL",
+      "version": null
+    }
+  ],
+  "proposedTechnologies": [
+    "Gin",
+    "Go",
+    "PostgreSQL"
+  ]
+}

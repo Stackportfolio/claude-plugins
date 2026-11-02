@@ -1,0 +1,25 @@
+{
+  "data": [
+    {
+      "id": "40000000-0000-0000-0000-000000000001",
+      "name": "React",
+      "version": null,
+      "former": false
+    },
+    {
+      "id": "40000000-0000-0000-0000-000000000002",
+      "name": "jQuery",
+      "version": null,
+      "former": true,
+      "replacedBy": {
+        "id": "40000000-0000-0000-0000-000000000001",
+        "name": "React"
+      }
+    }
+  ],
+  "pagination": {
+    "limit": 50,
+    "offset": 0,
+    "total": 2
+  }
+}

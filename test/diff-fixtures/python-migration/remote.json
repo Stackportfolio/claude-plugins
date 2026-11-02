@@ -1,0 +1,39 @@
+{
+  "data": [
+    {
+      "id": "20000000-0000-0000-0000-000000000001",
+      "name": "FastAPI",
+      "version": "0.109",
+      "former": false
+    },
+    {
+      "id": "20000000-0000-0000-0000-000000000002",
+      "name": "PostgreSQL",
+      "version": null,
+      "former": false
+    },
+    {
+      "id": "20000000-0000-0000-0000-000000000003",
+      "name": "Python",
+      "version": "3.11",
+      "former": false
+    },
+    {
+      "id": "20000000-0000-0000-0000-000000000004",
+      "name": "Redis",
+      "version": null,
+      "former": false
+    },
+    {
+      "id": "20000000-0000-0000-0000-000000000005",
+      "name": "Celery",
+      "version": null,
+      "former": false
+    }
+  ],
+  "pagination": {
+    "limit": 50,
+    "offset": 0,
+    "total": 5
+  }
+}

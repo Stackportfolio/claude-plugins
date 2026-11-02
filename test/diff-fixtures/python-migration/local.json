@@ -1,0 +1,29 @@
+[
+  {
+    "name": "FastAPI",
+    "version": "0.110",
+    "evidence": "pyproject.toml:7",
+    "kind": "framework"
+  },
+  {
+    "name": "PostgreSQL",
+    "evidence": "pyproject.toml:8",
+    "kind": "db"
+  },
+  {
+    "name": "Python",
+    "version": "3.12",
+    "evidence": ".python-version:1",
+    "kind": "runtime"
+  },
+  {
+    "name": "Redis",
+    "evidence": "pyproject.toml:9",
+    "kind": "db"
+  },
+  {
+    "name": "RQ",
+    "evidence": "pyproject.toml:12",
+    "kind": "framework"
+  }
+]

@@ -1,0 +1,56 @@
+{
+  "add": [
+    {
+      "name": "SvelteKit",
+      "evidence": "package.json:9",
+      "kind": "framework",
+      "version": null
+    },
+    {
+      "name": "Tailwind CSS",
+      "evidence": "package.json:11",
+      "kind": "framework",
+      "version": null
+    },
+    {
+      "name": "TypeScript",
+      "evidence": "package.json:12",
+      "kind": "runtime",
+      "version": null
+    }
+  ],
+  "remove": [
+    {
+      "id": "44444444-4444-4444-4444-444444444444",
+      "name": "Webpack",
+      "version": null
+    }
+  ],
+  "version": [],
+  "former": [],
+  "unchanged": [
+    {
+      "id": "11111111-1111-1111-1111-111111111111",
+      "name": "Node.js",
+      "version": null
+    },
+    {
+      "id": "33333333-3333-3333-3333-333333333333",
+      "name": "PostgreSQL",
+      "version": null
+    },
+    {
+      "id": "22222222-2222-2222-2222-222222222222",
+      "name": "Svelte",
+      "version": null
+    }
+  ],
+  "proposedTechnologies": [
+    "Node.js",
+    "PostgreSQL",
+    "Svelte",
+    "SvelteKit",
+    "Tailwind CSS",
+    "TypeScript"
+  ]
+}
