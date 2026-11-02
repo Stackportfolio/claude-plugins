@@ -39,7 +39,7 @@ This skill extracts verifiable repository metrics using the deterministic bundle
 1. Call `whoami` (`mcp__plugin_stackportfolio_stackportfolio__whoami`) to obtain the authenticated user's ID, username, and primary email address.
 2. Check `git config user.email` in the local repository directory to discover the current local commit email.
 3. Present the discovered emails to the user and prompt them to confirm or supply any additional emails they have committed under (such as work emails, personal addresses, or GitHub noreply addresses like `<id>+<username>@users.noreply.github.com`).
-4. Collect all verified author email addresses. Matching against git commits is case-insensitive and covers author emails, committer emails, and `Co-authored-by:` trailers.
+4. Collect all verified author email addresses. Matching against git commits is case-insensitive and covers author emails and `Co-authored-by:` trailers.
 
 ### Step 2: Resolve Target Project
 Identify which Stackportfolio project to link the contribution story to:
@@ -56,17 +56,20 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/git-evidence.mjs" [target-dir] --author <ema
 (If Node is unavailable, manually inspect `git log` with an argument array using equivalent logic).
 
 `git-evidence.mjs` inspects repository history via git log only (no shell, argument array only) and outputs deterministic JSON:
-- `commitCount`: Total commits matched for the specified authors (including committer matches and co-authored commits).
+- `commitCount`: Total commits matched for the specified authors (including co-authored commits).
 - `firstCommitDate` & `lastCommitDate`: Earliest and latest commit dates in ISO 8601 format.
 - `activeSpan`: `{ first, last, days }` detailing the active calendar span of the contributor's work.
+- `isShallow`: Boolean indicating whether the repository clone is shallow (`git rev-parse --is-shallow-repository`). If `isShallow` is `true`, evidence is truncated; warn the user and suggest running `git fetch --unshallow`.
 - `filesTouched` & `fileCount`: List and count of unique files changed.
 - `areasTouched` & `areas`: Top-level directory areas touched (e.g., `src`, `test`, `plugins`, `scripts`, `root`) with breakdown of files and changed lines.
 - `topLanguages`: Programming and markup languages mapped from file extensions, sorted descending by changed lines.
 - `prRefs` & `mergeRefs`: Pull request numbers (`#123`) and merge commit references (`Merge pull request #123`) found in commit messages.
 
+If `isShallow` is `true`, inform the user that commit evidence is truncated and suggest running `git fetch --unshallow` before proceeding to draft the story.
+
 ### Step 4: Check for Existing Story (View / Edit / Delete)
 Call `get_contribution_story` (`mcp__plugin_stackportfolio_stackportfolio__get_contribution_story` with `projectId` and `userId`) to check if the caller already has a story recorded on this project (the caller's user identifier was retrieved in Step 1):
-- **View existing story**: If the user asks to view their story (or another contributor's story), display the stored fields (`problem`, `approach`, `corrections`, `hindsight`, `practices`, `links`). You can also call `list_project_contribution_stories` (`mcp__plugin_stackportfolio_stackportfolio__list_project_contribution_stories` with `projectId` and `scope: "mine"`) to list all stories on the project.
+- **View existing story**: If the user asks to view their story (or another contributor's story), display the stored fields (`problem`, `approach`, `corrections`, `hindsight`, `practices`, `links`). You can also call `list_project_contribution_stories` (`mcp__plugin_stackportfolio_stackportfolio__list_project_contribution_stories` with `projectId` and `scope: "mine"` to retrieve the caller's own story, or `scope: "all"` / omitted to list all contribution stories on the project).
 - **Delete existing story**: If the user requests deleting their story, **ALWAYS request explicit confirmation first**. State that deleting the story write-up leaves their contribution record and technologies intact. Once explicitly confirmed, call `delete_contribution_story` (`mcp__plugin_stackportfolio_stackportfolio__delete_contribution_story` with `projectId`).
 - **Create or edit story**: If drafting a new story or revising an existing one, proceed to Step 5.
 

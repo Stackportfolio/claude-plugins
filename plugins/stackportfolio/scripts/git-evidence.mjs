@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { execFile } from 'node:child_process';
-import { existsSync, statSync } from 'node:fs';
+import { existsSync, statSync, realpathSync } from 'node:fs';
 import { resolve, extname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -166,6 +166,18 @@ export async function collectGitEvidence({ repoDir, author }) {
 
 	const targetEmailSet = new Set(authorEmails);
 
+	let isShallow = false;
+	try {
+		const shallowRes = await execFileAsync(
+			'git',
+			['rev-parse', '--is-shallow-repository'],
+			{ cwd: targetRepo, encoding: 'utf8' }
+		);
+		isShallow = shallowRes.stdout.trim() === 'true';
+	} catch {
+		isShallow = false;
+	}
+
 	// Format: %x1e (record sep) + hash, authorEmail, authorDate, committerEmail, committerDate, subject, body + %x1f
 	// Followed on following lines by numstat output.
 	const logFormat = '%x1e%H%x1f%aE%x1f%aI%x1f%cE%x1f%cI%x1f%s%x1f%b%x1f';
@@ -196,6 +208,7 @@ export async function collectGitEvidence({ repoDir, author }) {
 				firstCommitDate: null,
 				lastCommitDate: null,
 				activeSpan: null,
+				isShallow,
 				filesTouched: [],
 				fileCount: 0,
 				areasTouched: [],
@@ -242,7 +255,6 @@ export async function collectGitEvidence({ repoDir, author }) {
 
 		const isAuthorMatch =
 			targetEmailSet.has(authorEmail) ||
-			targetEmailSet.has(committerEmail) ||
 			coAuthors.some((e) => targetEmailSet.has(e));
 
 		if (!isAuthorMatch) continue;
@@ -405,6 +417,7 @@ export async function collectGitEvidence({ repoDir, author }) {
 		firstCommitDate: earliestDateStr,
 		lastCommitDate: latestDateStr,
 		activeSpan,
+		isShallow,
 		filesTouched,
 		fileCount: filesTouched.length,
 		areasTouched,
@@ -462,8 +475,17 @@ async function main() {
 	}
 }
 
-const currentFilePath = fileURLToPath(import.meta.url);
-if (process.argv[1] && resolve(process.argv[1]) === resolve(currentFilePath)) {
+// CLI execution check
+export function isMainModule(metaUrl) {
+	if (!process.argv[1]) return false;
+	try {
+		return fileURLToPath(metaUrl) === realpathSync(process.argv[1]);
+	} catch {
+		return false;
+	}
+}
+
+if (isMainModule(import.meta.url)) {
 	main().catch((err) => {
 		console.error(err);
 		process.exit(1);

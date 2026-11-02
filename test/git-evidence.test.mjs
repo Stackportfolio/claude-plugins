@@ -3,17 +3,19 @@ import assert from 'node:assert';
 import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import {
 	collectGitEvidence,
 	normalizeNumstatPath,
 	extractCoAuthorEmails,
 	detectFileLanguage,
-	EXTENSION_MAP
+	EXTENSION_MAP,
+	isMainModule
 } from '../plugins/stackportfolio/scripts/git-evidence.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const PLUGIN_ROOT = resolve(__dirname, '../plugins/stackportfolio');
 const SCRIPT_PATH = resolve(
 	__dirname,
 	'../plugins/stackportfolio/scripts/git-evidence.mjs'
@@ -136,15 +138,16 @@ describe('git-evidence', () => {
 			author: 'alice@example.com'
 		});
 
-		// Alice has: Commit 1 (author), Commit 3 (co-author), Commit 4 (committer), Commit 5 (author) = 4 commits
-		assert.strictEqual(aliceEvidence.commitCount, 4);
+		// Alice has: Commit 1 (author), Commit 3 (co-author), Commit 5 (author) = 3 commits
+		assert.strictEqual(aliceEvidence.commitCount, 3);
+		assert.strictEqual(aliceEvidence.isShallow, false);
 
-		// Alice touched files should include her TypeScript files, shared Go file, root README, and .github workflow
+		// Alice touched files should include her TypeScript files, shared Go file, and root README
 		assert.ok(aliceEvidence.filesTouched.includes('src/index.ts'));
 		assert.ok(aliceEvidence.filesTouched.includes('src/utils.ts'));
 		assert.ok(aliceEvidence.filesTouched.includes('shared/bridge.go'));
 		assert.ok(aliceEvidence.filesTouched.includes('README.md'));
-		assert.ok(aliceEvidence.filesTouched.includes('.github/workflows/ci.yml'));
+		assert.strictEqual(aliceEvidence.filesTouched.includes('.github/workflows/ci.yml'), false);
 
 		// Alice should NOT have touched Bob's solo Python files
 		assert.strictEqual(aliceEvidence.filesTouched.includes('py/app.py'), false);
@@ -157,6 +160,7 @@ describe('git-evidence', () => {
 
 		// Bob has: Commit 2 (author), Commit 3 (author) = 2 commits
 		assert.strictEqual(bobEvidence.commitCount, 2);
+		assert.strictEqual(bobEvidence.isShallow, false);
 
 		// Bob touched Python files and shared Go file
 		assert.ok(bobEvidence.filesTouched.includes('py/app.py'));
@@ -168,7 +172,7 @@ describe('git-evidence', () => {
 		assert.strictEqual(bobEvidence.filesTouched.includes('.github/workflows/ci.yml'), false);
 	});
 
-	it('matches author and committer emails case-insensitively', async () => {
+	it('matches author and co-author emails case-insensitively', async () => {
 		const uppercaseEvidence = await collectGitEvidence({
 			repoDir: fixtureDir,
 			author: 'ALICE@EXAMPLE.COM'
@@ -209,11 +213,11 @@ describe('git-evidence', () => {
 		const languages = aliceEvidence.topLanguages.map((l) => l.language);
 		assert.ok(languages.includes('TypeScript'));
 		assert.ok(languages.includes('Go'));
-		assert.ok(languages.includes('YAML'));
 		assert.ok(languages.includes('Markdown'));
 
-		// Alice did not write Python
+		// Alice did not write Python or YAML (Commit 4 was authored by Automation Bot)
 		assert.strictEqual(languages.includes('Python'), false);
+		assert.strictEqual(languages.includes('YAML'), false);
 
 		// Assert changed lines numbers are present
 		const tsStat = aliceEvidence.topLanguages.find((l) => l.language === 'TypeScript');
@@ -263,7 +267,7 @@ describe('git-evidence', () => {
 		assert.ok(aliceEvidence.areasTouched.includes('src'));
 		assert.ok(aliceEvidence.areasTouched.includes('shared'));
 		assert.ok(aliceEvidence.areasTouched.includes('root'));
-		assert.ok(aliceEvidence.areasTouched.includes('.github'));
+		assert.strictEqual(aliceEvidence.areasTouched.includes('.github'), false);
 
 		assert.ok(aliceEvidence.areas.src);
 		assert.strictEqual(aliceEvidence.areas.src.files, 2); // index.ts, utils.ts
@@ -276,8 +280,8 @@ describe('git-evidence', () => {
 			author: 'alice@example.com,bob@example.com'
 		});
 
-		// Total commits across both authors
-		assert.strictEqual(combined.commitCount, 5);
+		// Total commits across both authors (Commit 1, 2, 3, 5)
+		assert.strictEqual(combined.commitCount, 4);
 		assert.strictEqual(combined.authorEmails.length, 2);
 	});
 
@@ -289,8 +293,9 @@ describe('git-evidence', () => {
 		);
 
 		const parsed = JSON.parse(stdout);
-		assert.strictEqual(parsed.commitCount, 4);
-		assert.strictEqual(parsed.fileCount, 5);
+		assert.strictEqual(parsed.commitCount, 3);
+		assert.strictEqual(parsed.fileCount, 4);
+		assert.strictEqual(parsed.isShallow, false);
 		assert.ok(parsed.topLanguages.length > 0);
 		assert.ok(parsed.prRefs.includes('#10'));
 	});
@@ -343,6 +348,7 @@ describe('git-evidence', () => {
 			assert.strictEqual(parsed.firstCommitDate, null);
 			assert.strictEqual(parsed.lastCommitDate, null);
 			assert.strictEqual(parsed.activeSpan, null);
+			assert.strictEqual(parsed.isShallow, false);
 			assert.strictEqual(parsed.fileCount, 0);
 			assert.deepStrictEqual(parsed.filesTouched, []);
 			assert.deepStrictEqual(parsed.topLanguages, []);
@@ -387,5 +393,101 @@ describe('git-evidence', () => {
 		assert.strictEqual(detectFileLanguage('Dockerfile'), 'Docker');
 		assert.strictEqual(detectFileLanguage('Makefile'), 'Makefile');
 		assert.strictEqual(detectFileLanguage('unknown.xyz'), null);
+	});
+
+	it('spawns through a symlinked directory and asserts non-empty valid JSON', () => {
+		const tempDir = mkdtempSync(join(tmpdir(), 'evidence-sym-'));
+		try {
+			const symlinkedPluginRoot = join(tempDir, 'plugin-symlink');
+			symlinkSync(PLUGIN_ROOT, symlinkedPluginRoot, 'dir');
+
+			const symlinkedScript = join(symlinkedPluginRoot, 'scripts/git-evidence.mjs');
+
+			const stdout = execFileSync(
+				'node',
+				[symlinkedScript, fixtureDir, '--author', 'alice@example.com'],
+				{
+					encoding: 'utf8',
+					cwd: tempDir
+				}
+			);
+
+			assert.ok(stdout.trim().length > 0, 'Stdout should not be empty when run through symlink');
+			const parsed = JSON.parse(stdout);
+			assert.strictEqual(parsed.commitCount, 3);
+			assert.strictEqual(parsed.isShallow, false);
+			assert.ok(Array.isArray(parsed.filesTouched));
+			assert.ok(parsed.filesTouched.includes('src/index.ts'));
+		} finally {
+			rmSync(tempDir, { recursive: true, force: true });
+		}
+	});
+
+	it('does not credit a maintainer who cherry-picks or rebases another author commit', async () => {
+		const rebaseDir = mkdtempSync(join(tmpdir(), 'git-rebase-fixture-'));
+		try {
+			execFileSync('git', ['init', '-b', 'main'], { cwd: rebaseDir });
+			const fullPath = join(rebaseDir, 'contrib.js');
+			writeFileSync(fullPath, 'console.log("by contributor");\n', 'utf8');
+			execFileSync('git', ['add', '.'], { cwd: rebaseDir });
+			execFileSync('git', ['commit', '-m', 'feat: contributor patch'], {
+				cwd: rebaseDir,
+				env: {
+					...process.env,
+					GIT_AUTHOR_NAME: 'Contributor Carl',
+					GIT_AUTHOR_EMAIL: 'contributor@example.com',
+					GIT_AUTHOR_DATE: '2026-02-01T12:00:00Z',
+					GIT_COMMITTER_NAME: 'Maintainer Mary',
+					GIT_COMMITTER_EMAIL: 'maintainer@example.com',
+					GIT_COMMITTER_DATE: '2026-02-02T12:00:00Z'
+				}
+			});
+
+			// Maintainer Mary was only committer on rebase/cherry-pick; should have 0 credit
+			const maintainerEvidence = await collectGitEvidence({
+				repoDir: rebaseDir,
+				author: 'maintainer@example.com'
+			});
+			assert.strictEqual(maintainerEvidence.commitCount, 0);
+			assert.deepStrictEqual(maintainerEvidence.filesTouched, []);
+			assert.strictEqual(maintainerEvidence.fileCount, 0);
+			assert.deepStrictEqual(maintainerEvidence.topLanguages, []);
+
+			// Original author Contributor Carl gets full credit
+			const contributorEvidence = await collectGitEvidence({
+				repoDir: rebaseDir,
+				author: 'contributor@example.com'
+			});
+			assert.strictEqual(contributorEvidence.commitCount, 1);
+			assert.deepStrictEqual(contributorEvidence.filesTouched, ['contrib.js']);
+			assert.strictEqual(contributorEvidence.fileCount, 1);
+			assert.strictEqual(contributorEvidence.topLanguages[0].language, 'JavaScript');
+		} finally {
+			rmSync(rebaseDir, { recursive: true, force: true });
+		}
+	});
+
+	it('detects shallow repositories and reports isShallow true/false accurately', async () => {
+		const shallowDir = mkdtempSync(join(tmpdir(), 'git-shallow-fixture-'));
+		try {
+			execFileSync('git', ['clone', '--depth', '1', `file://${fixtureDir}`, shallowDir], {
+				stdio: 'pipe'
+			});
+
+			const shallowEvidence = await collectGitEvidence({
+				repoDir: shallowDir,
+				author: 'alice@example.com'
+			});
+			assert.strictEqual(shallowEvidence.isShallow, true);
+
+			// Non-shallow repository reports false
+			const fullEvidence = await collectGitEvidence({
+				repoDir: fixtureDir,
+				author: 'alice@example.com'
+			});
+			assert.strictEqual(fullEvidence.isShallow, false);
+		} finally {
+			rmSync(shallowDir, { recursive: true, force: true });
+		}
 	});
 });
