@@ -63,6 +63,7 @@
         "tags": [
           "Account"
         ],
+        "x-mcp-tool": "search_documentation",
         "x-required-scope": "profile:read",
         "security": [
           {
@@ -137,8 +138,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "search_documentation"
+        }
       }
     },
     "/me": {
@@ -148,6 +148,7 @@
         "tags": [
           "Account"
         ],
+        "x-mcp-tool": "whoami",
         "x-required-scope": null,
         "security": [
           {
@@ -197,8 +198,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "whoami"
+        }
       }
     },
     "/profile": {
@@ -208,6 +208,7 @@
         "tags": [
           "Account"
         ],
+        "x-mcp-tool": "get_profile",
         "x-required-scope": "profile:read",
         "security": [
           {
@@ -267,8 +268,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "get_profile"
+        }
       },
       "patch": {
         "operationId": "updateProfile",
@@ -277,6 +277,7 @@
         "tags": [
           "Account"
         ],
+        "x-mcp-tool": "update_profile",
         "x-required-scope": "profile:write",
         "security": [
           {
@@ -333,14 +334,28 @@
                     "type": "boolean"
                   },
                   "preferredSalaryMin": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 100000000
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 100000000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "preferredSalaryMax": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 100000000
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 100000000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "salaryCurrency": {
                     "type": "string",
@@ -409,8 +424,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "update_profile"
+        }
       }
     },
     "/projects": {
@@ -421,6 +435,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "list_projects",
         "x-required-scope": "projects:read",
         "security": [
           {
@@ -531,8 +546,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "list_projects"
+        }
       },
       "post": {
         "operationId": "createProject",
@@ -541,6 +555,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "create_project",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -763,8 +778,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "create_project"
+        }
       }
     },
     "/projects/{id}": {
@@ -774,6 +788,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "get_project",
         "x-required-scope": "projects:read",
         "security": [
           {
@@ -844,8 +859,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "get_project"
+        }
       },
       "patch": {
         "operationId": "updateProject",
@@ -854,6 +868,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "update_project",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -1065,8 +1080,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "update_project"
+        }
       },
       "delete": {
         "operationId": "deleteProject",
@@ -1141,6 +1155,97 @@
         }
       }
     },
+    "/projects/{id}/badge": {
+      "get": {
+        "operationId": "getProjectBadgeMarkdown",
+        "summary": "Get project README badge markdown",
+        "description": "Returns Markdown snippets and an idempotent marker block for embedding the project stack card (and optional profile badge) in a repository README.md.",
+        "tags": [
+          "Projects"
+        ],
+        "x-mcp-tool": "get_project_badge_markdown",
+        "x-required-scope": "projects:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Project id (uuid).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeProfileBadge",
+            "description": "Whether to include the project owner profile badge in the markdown snippet.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The project README badge markdown and marker block.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectBadgeMarkdown"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        }
+      }
+    },
     "/projects/{id}/technologies": {
       "get": {
         "operationId": "listProjectTechnologies",
@@ -1148,6 +1253,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "list_project_technologies",
         "x-required-scope": "projects:read",
         "security": [
           {
@@ -1257,8 +1363,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "list_project_technologies"
+        }
       },
       "post": {
         "operationId": "addProjectTechnology",
@@ -1267,6 +1372,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "add_project_technology",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -1393,8 +1499,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "add_project_technology"
+        }
       }
     },
     "/projects/{id}/media": {
@@ -1405,6 +1510,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "list_project_media",
         "x-required-scope": "projects:read",
         "security": [
           {
@@ -1514,8 +1620,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "list_project_media"
+        }
       },
       "post": {
         "operationId": "addProjectMedia",
@@ -1524,6 +1629,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "add_project_media",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -1649,8 +1755,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "add_project_media"
+        }
       }
     },
     "/projects/{id}/media/uploads": {
@@ -1661,6 +1766,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "create_project_media_upload",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -1774,8 +1880,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "create_project_media_upload"
+        }
       }
     },
     "/uploads/{token}": {
@@ -1820,6 +1925,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "update_project_media",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -1954,8 +2060,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "update_project_media"
+        }
       },
       "put": {
         "operationId": "replaceProjectMedia",
@@ -1964,6 +2069,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "replace_project_media",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -2095,8 +2201,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "replace_project_media"
+        }
       },
       "delete": {
         "operationId": "removeProjectMedia",
@@ -2105,6 +2210,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "remove_project_media",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -2180,8 +2286,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "remove_project_media"
+        }
       }
     },
     "/projects/{id}/technologies/{technologyId}": {
@@ -2192,6 +2297,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "update_project_technology",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -2325,8 +2431,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "update_project_technology"
+        }
       },
       "delete": {
         "operationId": "removeProjectTechnology",
@@ -2335,6 +2440,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "remove_project_technology",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -2407,8 +2513,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "remove_project_technology"
+        }
       }
     },
     "/projects/{id}/contributors": {
@@ -2419,6 +2524,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "list_project_contributors",
         "x-required-scope": "projects:read",
         "security": [
           {
@@ -2528,8 +2634,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "list_project_contributors"
+        }
       },
       "post": {
         "operationId": "inviteProjectContributor",
@@ -2538,6 +2643,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "invite_project_contributor",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -2642,8 +2748,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "invite_project_contributor"
+        }
       }
     },
     "/projects/{id}/contributors/{userId}": {
@@ -2654,6 +2759,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "set_contributor_role",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -2761,8 +2867,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "set_contributor_role"
+        }
       },
       "delete": {
         "operationId": "removeProjectContributor",
@@ -2771,6 +2876,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "remove_project_contributor",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -2846,8 +2952,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "remove_project_contributor"
+        }
       }
     },
     "/projects/{id}/contributors/{userId}/technologies": {
@@ -2858,6 +2963,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "set_contributor_technologies",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -2965,8 +3071,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "set_contributor_technologies"
+        }
       }
     },
     "/projects/{id}/contributors/{userId}/skills": {
@@ -2977,6 +3082,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "set_contributor_skills",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -3084,8 +3190,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "set_contributor_skills"
+        }
       }
     },
     "/stories": {
@@ -3096,6 +3201,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "list_contribution_stories",
         "x-required-scope": "projects:read",
         "security": [
           {
@@ -3206,8 +3312,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "list_contribution_stories"
+        }
       }
     },
     "/projects/{id}/stories": {
@@ -3218,6 +3323,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "list_project_contribution_stories",
         "x-required-scope": "projects:read",
         "security": [
           {
@@ -3340,8 +3446,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "list_project_contribution_stories"
+        }
       }
     },
     "/projects/{id}/stories/{userId}": {
@@ -3352,6 +3457,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "get_contribution_story",
         "x-required-scope": "projects:read",
         "security": [
           {
@@ -3431,8 +3537,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "get_contribution_story"
+        }
       }
     },
     "/projects/{id}/story": {
@@ -3443,6 +3548,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "save_contribution_story",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -3612,8 +3718,7 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "save_contribution_story"
+        }
       },
       "delete": {
         "operationId": "deleteContributionStory",
@@ -3622,6 +3727,7 @@
         "tags": [
           "Projects"
         ],
+        "x-mcp-tool": "delete_contribution_story",
         "x-required-scope": "projects:write",
         "security": [
           {
@@ -3685,32 +3791,138 @@
           "500": {
             "$ref": "#/components/responses/Internal"
           }
-        },
-        "x-mcp-tool": "delete_contribution_story"
+        }
       }
     },
     "/technologies": {
       "get": {
         "operationId": "searchTechnologies",
+        "summary": "Search technology catalogue",
+        "description": "Search technologies by name or alias, or batch-resolve up to 100 technology names.",
+        "tags": [
+          "Account"
+        ],
         "x-mcp-tool": "search_technologies",
+        "x-required-scope": "projects:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "projects:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "projects:read"
+            ]
+          }
+        ],
         "parameters": [
           {
             "name": "q",
+            "description": "Search term to match technology names or aliases, at most 200 characters. Exact matches rank first, then prefix, then substring matches.",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
             "in": "query"
           },
           {
             "name": "names",
+            "description": "Technology names or aliases to batch-resolve (at most 100), listed first in input order. Repeat `names` or `names[]`: every `names` value is split on commas, a `names[]` value is taken whole (so a name may contain a comma).",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100
+            },
             "in": "query"
           },
           {
             "name": "limit",
+            "description": "Page size, clamped to 1–100.",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            },
             "in": "query"
           },
           {
             "name": "offset",
+            "description": "Rows to skip, at most 10000.",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 10000
+            },
             "in": "query"
           }
-        ]
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching technologies from the catalogue.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "pagination"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CatalogueTechnology"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "The request allowance of the window closest to running out.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until that window resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/InsufficientScope"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        }
       }
     }
   },
@@ -4587,6 +4799,23 @@
           "media"
         ]
       },
+      "ProjectBadgeMarkdown": {
+        "type": "object",
+        "properties": {
+          "markdown": {
+            "type": "string",
+            "description": "The Markdown snippet for the project card and optional profile badge."
+          },
+          "block": {
+            "type": "string",
+            "description": "The Markdown snippet wrapped in Stackportfolio marker comments."
+          }
+        },
+        "required": [
+          "markdown",
+          "block"
+        ]
+      },
       "Technology": {
         "type": "object",
         "properties": {
@@ -4688,6 +4917,37 @@
           "former",
           "replacedBy",
           "categories"
+        ]
+      },
+      "CatalogueTechnology": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string",
+            "description": "Canonical technology name."
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Alternative names and spellings for this technology."
+          },
+          "isApproved": {
+            "type": "boolean",
+            "description": "Whether this technology is approved in the catalogue."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "aliases",
+          "isApproved"
         ]
       },
       "ProjectMedia": {
